@@ -22,8 +22,11 @@ import (
 	trendyolcomv1beta1 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/client/istio"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -54,25 +57,44 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	namespace := req.Namespace
 	_ = r.Log.WithValues("localratelimit", req.NamespacedName)
 	localRateLimitInstance := &trendyolcomv1beta1.LocalRateLimit{}
-	_ = r.Get(context.TODO(), types.NamespacedName{
+	err := r.Get(context.TODO(), types.NamespacedName{
 		Namespace: namespace,
 		Name:      req.Name,
 	}, localRateLimitInstance)
+	localEnvoyFilterName := localRateLimitInstance.Spec.Workload + "-local-ratelimit"
 
-	err := pkg.Validate(localRateLimitInstance)
+	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
+		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
+	}
+
+
+	if err != nil {
+		klog.Infof("Cannot get LocalRatelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	beingDeleted := localRateLimitInstance.GetDeletionTimestamp() != nil
+
+	if beingDeleted {
+		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
+	}
+
+	err = pkg.Validate(localRateLimitInstance)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	envoyFilter, err := istio.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
+	byte, envoyFilter, err := istio.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
 
 	if err != nil {
 		//klog.Infof("Cannot get Ratelimit CR %s. Error %v", rateLimitInstance.Name, err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	_, err = r.IstioClient.CreateLocalRateLimitEnvoyFilter(ctx, namespace, envoyFilter)
+	_, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
 	if err != nil {
+		_, err := r.IstioClient.PatchEnvoyFilter(ctx, byte, namespace, localEnvoyFilterName)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 
 	}
 	// your logic here

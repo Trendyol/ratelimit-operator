@@ -12,7 +12,7 @@ var localRateLimit = `{
     "apiVersion": "networking.istio.io/v1alpha3",
     "kind": "EnvoyFilter",
     "metadata": {
-        "name": "%s-local-ratelimit-svc",
+        "name": "%s-local-ratelimit",
         "namespace": "%s"
     },
     "spec": {
@@ -77,14 +77,15 @@ var localRateLimit = `{
     }
 }`
 
-func GetLocalRateLimitEnvoyFilter(namespace string, limit *v1beta1.LocalRateLimit) (*v1alpha3.EnvoyFilter, error) {
+func GetLocalRateLimitEnvoyFilter(namespace string, limit *v1beta1.LocalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
 	tokenBucket := limit.Spec.TokenBucket
 	envoyFilter := v1alpha3.EnvoyFilter{}
 
 	printf := fmt.Sprintf(localRateLimit, limit.Spec.Workload, namespace, tokenBucket.FillInterval, tokenBucket.MaxToken, tokenBucket.TokenPerFill, limit.Spec.Workload)
-	err := json.Unmarshal(bytes.NewBufferString(printf).Bytes(), &envoyFilter)
+	byte := bytes.NewBufferString(printf).Bytes()
+	err := json.Unmarshal(byte, &envoyFilter)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &envoyFilter, nil
+	return byte, &envoyFilter, nil
 }
