@@ -29,8 +29,8 @@ type LocalRateLimitSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of LocalRateLimit. Edit localratelimit_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-	Workload string `json:"workload,omitempty"`
+	Foo         string      `json:"foo,omitempty"`
+	Workload    string      `json:"workload,omitempty"`
 	TokenBucket TokenBucket `json:"token_bucket,omitempty"`
 }
 
@@ -52,10 +52,10 @@ type LocalRateLimit struct {
 	Status LocalRateLimitStatus `json:"status,omitempty"`
 }
 
-type TokenBucket struct{
-	MaxToken   int16   `json:"max_token,omitempty"`
-	TokenPerFill   int16   `json:"token_per_fill,omitempty"`
-	FillInterval   int16   `json:"fill_interval,omitempty"`
+type TokenBucket struct {
+	MaxTokens     int16  `json:"max_tokens,required"`
+	TokensPerFill int16  `json:"tokens_per_fill,required"`
+	FillInterval  string `json:"fill_interval,required"`
 }
 
 //+kubebuilder:object:root=true

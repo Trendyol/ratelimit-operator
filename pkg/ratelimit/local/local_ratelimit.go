@@ -81,7 +81,7 @@ func GetLocalRateLimitEnvoyFilter(namespace string, limit *v1beta1.LocalRateLimi
 	tokenBucket := limit.Spec.TokenBucket
 	envoyFilter := v1alpha3.EnvoyFilter{}
 
-	printf := fmt.Sprintf(localRateLimit, limit.Name, namespace, tokenBucket.FillInterval, tokenBucket.MaxToken, tokenBucket.TokenPerFill, limit.Spec.Workload)
+	printf := fmt.Sprintf(localRateLimit, limit.Name, namespace, tokenBucket.FillInterval, tokenBucket.MaxTokens, tokenBucket.TokensPerFill, limit.Spec.Workload)
 	byte := bytes.NewBufferString(printf).Bytes()
 	err := json.Unmarshal(byte, &envoyFilter)
 	if err != nil {

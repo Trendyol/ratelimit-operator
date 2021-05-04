@@ -11,7 +11,7 @@ func Test_ValidateIsWorkloadEmpty(t *testing.T) {
 	 	Spec: trendyolcomv1beta1.LocalRateLimitSpec{
 	 	Workload: "app",
 	 	TokenBucket: trendyolcomv1beta1.TokenBucket{
-	 	TokenPerFill: 100,
+	 	TokensPerFill: 100,
 		},
 		},
 	 })

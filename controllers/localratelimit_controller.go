@@ -79,7 +79,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-	byte, envoyFilter, err := local.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
+	patch, envoyFilter, err := local.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
 
 	if err != nil {
 		klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
@@ -97,8 +97,10 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		  return ctrl.Result{}, nil
         }
 	}else{
-      _ , err := r.IstioClient.PatchEnvoyFilter(ctx, byte, namespace, localEnvoyFilterName)
-      if err != nil {
+      _ , err := r.IstioClient.PatchEnvoyFilter(ctx, patch, namespace, localEnvoyFilterName)
+		klog.Infof("Patching Envoyfilter %s", localEnvoyFilterName)
+
+		if err != nil {
     	  klog.Infof("Cannot path Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
 		  return ctrl.Result{}, nil
         }

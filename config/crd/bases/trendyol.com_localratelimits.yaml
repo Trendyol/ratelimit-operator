@@ -43,11 +43,15 @@ spec:
               token_bucket:
                 properties:
                   fill_interval:
+                    type: string
+                  max_tokens:
                     type: integer
-                  max_token:
+                  tokens_per_fill:
                     type: integer
-                  token_per_fill:
-                    type: integer
+                required:
+                - fill_interval
+                - max_tokens
+                - tokens_per_fill
                 type: object
               workload:
                 type: string
