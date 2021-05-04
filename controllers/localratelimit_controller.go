@@ -61,12 +61,11 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		Namespace: namespace,
 		Name:      req.Name,
 	}, localRateLimitInstance)
-	localEnvoyFilterName := localRateLimitInstance.Spec.Workload + "-local-ratelimit"
+	localEnvoyFilterName := req.Name + "-local-ratelimit"
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
 		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
 	}
-
 
 	if err != nil {
 		klog.Infof("Cannot get LocalRatelimit CR %s. Error %v", localRateLimitInstance.Name, err)
@@ -87,7 +86,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	byte, envoyFilter, err := istio.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
 
 	if err != nil {
-		//klog.Infof("Cannot get Ratelimit CR %s. Error %v", rateLimitInstance.Name, err)
+		klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -97,7 +96,6 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 
 	}
-	// your logic here
 
 	return ctrl.Result{}, nil
 }
