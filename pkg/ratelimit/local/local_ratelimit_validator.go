@@ -1,4 +1,4 @@
-package pkg
+package local
 
 import (
 	"errors"
@@ -19,6 +19,5 @@ func Validate(localRateLimit *trendyolcomv1beta1.LocalRateLimit) error {
 	if localRateLimit.Spec.TokenBucket == (trendyolcomv1beta1.TokenBucket{}) {
 		return errors.New(tokenBucketEmptyError)
 	}
-
 	return nil
 }

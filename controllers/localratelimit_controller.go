@@ -20,8 +20,8 @@ import (
 	"context"
 	"github.com/go-logr/logr"
 	trendyolcomv1beta1 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
-	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/client/istio"
-	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg"
+	istio2 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/local"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,7 +36,7 @@ type LocalRateLimitReconciler struct {
 	client.Client
 	Log         logr.Logger
 	Scheme      *runtime.Scheme
-	IstioClient istio.IstioClient
+	IstioClient istio2.IstioClient
 }
 
 //+kubebuilder:rbac:groups=trendyol.com,resources=localratelimits,verbs=get;list;watch;create;update;patch;delete
@@ -78,12 +78,12 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
 	}
 
-	err = pkg.Validate(localRateLimitInstance)
+	err = local.Validate(localRateLimitInstance)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	byte, envoyFilter, err := istio.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
+	byte, envoyFilter, err := local.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
 
 	if err != nil {
 		klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
