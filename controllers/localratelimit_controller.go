@@ -65,6 +65,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
 		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
+        return ctrl.Result{}, nil
 	}
 
 	if err != nil {
@@ -72,31 +73,36 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	beingDeleted := localRateLimitInstance.GetDeletionTimestamp() != nil
-
-	if beingDeleted {
-		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
-	}
-
 	err = local.Validate(localRateLimitInstance)
 	if err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+        klog.Infof("Schema validation for LocalRatelimit CR %s is not valid. Error %v",localRateLimitInstance.Name, err)
+		return ctrl.Result{}, nil
 	}
 
 	byte, envoyFilter, err := local.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
 
 	if err != nil {
 		klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, nil
 	}
 
-	_, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
-	if err != nil {
-		_, err := r.IstioClient.PatchEnvoyFilter(ctx, byte, namespace, localEnvoyFilterName)
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-
-	}
-
+    _ , err = r.IstioClient.GetEnvoyFilter(ctx, namespace, localEnvoyFilterName)
+    if err != nil {
+        klog.Infof("Envoyfilter %s is not found. Error %v", localEnvoyFilterName, err)
+        klog.Infof("Creating Envoyfilter %s", localEnvoyFilterName)
+        _, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
+	    
+        if err != nil {
+    	  klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+		  return ctrl.Result{}, nil
+        }
+	}else{
+      _ , err := r.IstioClient.PatchEnvoyFilter(ctx, byte, namespace, localEnvoyFilterName)
+      if err != nil {
+    	  klog.Infof("Cannot path Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+		  return ctrl.Result{}, nil
+        }
+    }
 	return ctrl.Result{}, nil
 }
 
