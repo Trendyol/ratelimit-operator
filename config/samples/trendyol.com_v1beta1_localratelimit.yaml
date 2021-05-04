@@ -1,0 +1,7 @@
+apiVersion: trendyol.com/v1beta1
+kind: LocalRateLimit
+metadata:
+  name: localratelimit-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -1,0 +1,19 @@
+domain: trendyol.com
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: ratelimit-operator
+repo: gitlab.trendyol.com/platform/base/apps/ratelimit-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: trendyol.com
+  group: trendyol.com
+  kind: LocalRateLimit
+  path: gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1
+  version: v1beta1
+version: "3"
