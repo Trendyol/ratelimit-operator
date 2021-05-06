@@ -60,8 +60,12 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 		for _, dimension := range eachRate.Dimensions {
 			action := v1beta1.Actions{}
 			//TODO: null or empty check
-			action.RequestHeader = dimension.RequestHeader
-			action.HeaderValueMatch = dimension.HeaderValueMatch
+			if len(dimension.HeaderValueMatch.DescriptorValue) > 0 {
+				action.HeaderValueMatch = dimension.HeaderValueMatch
+			}
+			if len(dimension.RequestHeader.HeaderName) > 0 {
+				action.RequestHeader = dimension.RequestHeader
+			}
 			action.RemoteAddress = dimension.RemoteAddress
 			actions = append(actions, action)
 		}
@@ -71,7 +75,7 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 	}
 	rlAction.RateLimits = rateLimits
 	strRlAction, _ := json.Marshal(&rlAction)
-	pretty, _ := prettyprint(strRlAction)
+	pretty, _ := prettyPrint(strRlAction)
 	patchValue, envoyFilterObj, err := getGlobalEnvoyFilterAction(namespace, string(pretty), global)
 
 	_, err = r.istio.GetEnvoyFilter(ctx, namespace, name)
@@ -105,7 +109,7 @@ func getGlobalEnvoyFilterAction(namespace string, action string, global *v1beta1
 	return byte, &envoyFilter, nil
 }
 
-func prettyprint(b []byte) ([]byte, error) {
+func prettyPrint(b []byte) ([]byte, error) {
 	var out bytes.Buffer
 	err := json.Indent(&out, b, "", "  ")
 	return out.Bytes(), err

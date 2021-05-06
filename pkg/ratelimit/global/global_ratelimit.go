@@ -66,6 +66,7 @@ func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimi
 
 	found := v1.ConfigMap{}
 
+	//TODO:fix if configmap doesn't exist create empty config map
 	found, err = r.getConfigMap("ratelimit-configmap2", namespace)
 	cm := v1.ConfigMap{}
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
