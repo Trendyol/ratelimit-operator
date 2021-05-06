@@ -20,7 +20,7 @@ import (
 	"context"
 	"github.com/go-logr/logr"
 	trendyolcomv1beta1 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
-	istio2 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/local"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +36,7 @@ type LocalRateLimitReconciler struct {
 	client.Client
 	Log         logr.Logger
 	Scheme      *runtime.Scheme
-	IstioClient istio2.IstioClient
+	IstioClient istio.IstioClient
 }
 
 //+kubebuilder:rbac:groups=trendyol.com,resources=localratelimits,verbs=get;list;watch;create;update;patch;delete
@@ -65,7 +65,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
 		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
-        return ctrl.Result{}, nil
+		return ctrl.Result{}, nil
 	}
 
 	if err != nil {
@@ -75,7 +75,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	err = local.Validate(localRateLimitInstance)
 	if err != nil {
-        klog.Infof("Schema validation for LocalRatelimit CR %s is not valid. Error %v",localRateLimitInstance.Name, err)
+		klog.Infof("Schema validation for LocalRatelimit CR %s is not valid. Error %v", localRateLimitInstance.Name, err)
 		return ctrl.Result{}, nil
 	}
 
@@ -86,25 +86,25 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-    _ , err = r.IstioClient.GetEnvoyFilter(ctx, namespace, localEnvoyFilterName)
-    if err != nil {
-        klog.Infof("Envoyfilter %s is not found. Error %v", localEnvoyFilterName, err)
-        klog.Infof("Creating Envoyfilter %s", localEnvoyFilterName)
-        _, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
-	    
-        if err != nil {
-    	  klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-		  return ctrl.Result{}, nil
-        }
-	}else{
-      _ , err := r.IstioClient.PatchEnvoyFilter(ctx, patch, namespace, localEnvoyFilterName)
+	_, err = r.IstioClient.GetEnvoyFilter(ctx, namespace, localEnvoyFilterName)
+	if err != nil {
+		klog.Infof("Envoyfilter %s is not found. Error %v", localEnvoyFilterName, err)
+		klog.Infof("Creating Envoyfilter %s", localEnvoyFilterName)
+		_, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
+
+		if err != nil {
+			klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+			return ctrl.Result{}, nil
+		}
+	} else {
+		_, err := r.IstioClient.PatchEnvoyFilter(ctx, patch, namespace, localEnvoyFilterName)
 		klog.Infof("Patching Envoyfilter %s", localEnvoyFilterName)
 
 		if err != nil {
-    	  klog.Infof("Cannot path Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-		  return ctrl.Result{}, nil
-        }
-    }
+			klog.Infof("Cannot path Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+			return ctrl.Result{}, nil
+		}
+	}
 	return ctrl.Result{}, nil
 }
 

@@ -18,8 +18,10 @@ package main
 
 import (
 	"flag"
-	istio2 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/global"
 	"os"
+
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -83,9 +85,18 @@ func main() {
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("LocalRateLimit"),
 		Scheme:      mgr.GetScheme(),
-		IstioClient: istio2.NewIstioClient(mgr.GetConfig()),
+		IstioClient: istio.NewIstioClient(mgr.GetConfig()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LocalRateLimit")
+		os.Exit(1)
+	}
+	if err = (&controllers.GlobalRateLimitReconciler{
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("GlobalRateLimit"),
+		Scheme:          mgr.GetScheme(),
+		GlobalRateLimit: global.NewGlobalRateLimit(mgr.GetClient(), istio.NewIstioClient(mgr.GetConfig())),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GlobalRateLimit")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -1,0 +1,129 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: globalratelimits.trendyol.com
+spec:
+  group: trendyol.com
+  names:
+    kind: GlobalRateLimit
+    listKind: GlobalRateLimitList
+    plural: globalratelimits
+    singular: globalratelimit
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: GlobalRateLimit is the Schema for the globalratelimits API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: GlobalRateLimitSpec defines the desired state of GlobalRateLimit
+            properties:
+              domain:
+                description: Foo is an example field of GlobalRateLimit. Edit globalratelimit_types.go
+                  to remove/update
+                type: string
+              rate:
+                items:
+                  properties:
+                    dimensions:
+                      items:
+                        properties:
+                          header_value_match:
+                            properties:
+                              descriptor_value:
+                                type: string
+                              headers:
+                                items:
+                                  properties:
+                                    contains_match:
+                                      type: boolean
+                                    exact_match:
+                                      type: string
+                                    invert_match:
+                                      format: int64
+                                      type: integer
+                                    name:
+                                      type: string
+                                    prefix_match:
+                                      type: string
+                                    present_match:
+                                      format: int64
+                                      type: integer
+                                    range_match:
+                                      format: int64
+                                      type: integer
+                                    suffix_match:
+                                      type: string
+                                  required:
+                                  - name
+                                  type: object
+                                type: array
+                            required:
+                            - descriptor_value
+                            - headers
+                            type: object
+                          remote_address:
+                            type: string
+                          request_header:
+                            properties:
+                              descriptor_key:
+                                type: string
+                              header_name:
+                                type: string
+                              value:
+                                type: string
+                            required:
+                            - descriptor_key
+                            - header_name
+                            type: object
+                        type: object
+                      type: array
+                    requestPerUnit:
+                      format: int64
+                      type: integer
+                    unit:
+                      type: string
+                  required:
+                  - dimensions
+                  - requestPerUnit
+                  - unit
+                  type: object
+                type: array
+              workload:
+                type: string
+            required:
+            - rate
+            - workload
+            type: object
+          status:
+            description: GlobalRateLimitStatus defines the observed state of GlobalRateLimit
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

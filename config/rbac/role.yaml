@@ -32,3 +32,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits/status
+  verbs:
+  - get
+  - patch
+  - update

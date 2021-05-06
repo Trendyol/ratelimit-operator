@@ -16,4 +16,13 @@ resources:
   kind: LocalRateLimit
   path: gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: trendyol.com
+  group: trendyol.com
+  kind: GlobalRateLimit
+  path: gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1
+  version: v1beta1
 version: "3"
