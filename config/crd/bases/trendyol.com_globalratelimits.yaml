@@ -37,8 +37,6 @@ spec:
             description: GlobalRateLimitSpec defines the desired state of GlobalRateLimit
             properties:
               domain:
-                description: Foo is an example field of GlobalRateLimit. Edit globalratelimit_types.go
-                  to remove/update
                 type: string
               rate:
                 items:
@@ -46,6 +44,17 @@ spec:
                     dimensions:
                       items:
                         properties:
+                          destination_cluster:
+                            type: object
+                          generic_key:
+                            properties:
+                              descriptor_key:
+                                type: string
+                              descriptor_value:
+                                type: string
+                            required:
+                            - descriptor_value
+                            type: object
                           header_value_match:
                             properties:
                               descriptor_value:
@@ -70,6 +79,16 @@ spec:
                                     range_match:
                                       format: int64
                                       type: integer
+                                    safe_regex_match:
+                                      properties:
+                                        google_re2:
+                                          type: object
+                                        regex:
+                                          type: string
+                                      required:
+                                      - google_re2
+                                      - regex
+                                      type: object
                                     suffix_match:
                                       type: string
                                   required:
@@ -94,22 +113,25 @@ spec:
                             - descriptor_key
                             - header_name
                             type: object
+                          source_cluster:
+                            type: object
                         type: object
                       type: array
-                    requestPerUnit:
+                    request_per_unit:
                       format: int64
                       type: integer
                     unit:
                       type: string
                   required:
                   - dimensions
-                  - requestPerUnit
+                  - request_per_unit
                   - unit
                   type: object
                 type: array
               workload:
                 type: string
             required:
+            - domain
             - rate
             - workload
             type: object

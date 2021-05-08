@@ -24,7 +24,10 @@ var globalEnvoyFilterAction = `{
   "apiVersion": "networking.istio.io/v1alpha3",
   "metadata": {
     "name": "%s-ratelimit-actions",
-    "namespace": "%s"
+    "namespace": "%s",
+    "labels":{
+     "generator": "ratelimit-operator"
+   }
   },
   "spec": {
     "configPatches": [

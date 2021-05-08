@@ -9,32 +9,6 @@ rules:
 - apiGroups:
   - trendyol.com
   resources:
-  - localratelimits
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - trendyol.com
-  resources:
-  - localratelimits/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - trendyol.com
-  resources:
-  - localratelimits/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - trendyol.com
-  resources:
   - globalratelimits
   verbs:
   - create
@@ -54,6 +28,32 @@ rules:
   - trendyol.com
   resources:
   - globalratelimits/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits/status
   verbs:
   - get
   - patch

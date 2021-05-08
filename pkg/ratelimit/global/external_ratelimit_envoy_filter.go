@@ -24,7 +24,7 @@ kind: EnvoyFilter
 apiVersion: networking.istio.io/v1alpha3
 metadata:
   labels:
-    app: details-app-demo
+    generator: ratelimit-operator
   name: details-app-demo-ratelimit
   namespace: default
 spec:

@@ -142,7 +142,7 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 				cfDescriptor.Key = eachDimension.RequestHeader.DescriptorKey
 				cfDescriptor.Value = eachDimension.RequestHeader.Value
 			}
-			if len(eachDimension.HeaderValueMatch.Headers) > 0 {
+			if len(eachDimension.HeaderValueMatch.HeaderMatcher) > 0 {
 				cfDescriptor.Key = "header_match"
 				cfDescriptor.Value = eachDimension.HeaderValueMatch.DescriptorValue
 			}
