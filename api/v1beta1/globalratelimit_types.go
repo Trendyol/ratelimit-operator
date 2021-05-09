@@ -39,12 +39,12 @@ type Rate struct {
 	Dimensions     []Dimensions `json:"dimensions,required"`
 }
 type Dimensions struct {
-	RequestHeader      RequestHeader      `json:"request_header,omitempty"`
-	HeaderValueMatch   HeaderValueMatch   `json:"header_value_match,omitempty"`
-	GenericKey         GenericKey         `json:"generic_key,omitempty"`
-	SourceCluster      SourceCluster      `json:"source_cluster,omitempty"`
-	DestinationCluster DestinationCluster `json:"destination_cluster,omitempty"`
-	RemoteAddress      string             `json:"remote_address,omitempty"`
+	RequestHeader      *RequestHeader      `json:"request_headers,omitempty"`
+	HeaderValueMatch   *HeaderValueMatch   `json:"header_value_match,omitempty"`
+	GenericKey         *GenericKey         `json:"generic_key,omitempty"`
+	SourceCluster      *SourceCluster      `json:"source_cluster,omitempty"`
+	DestinationCluster *DestinationCluster `json:"destination_cluster,omitempty"`
+	RemoteAddress      string              `json:"remote_address,omitempty"`
 }
 
 type HeaderValueMatch struct {
@@ -54,16 +54,17 @@ type HeaderValueMatch struct {
 }
 
 type HeaderMatcher struct {
-	Name           string         `json:"name,required"`
-	ExactMatch     string         `json:"exact_match,omitempty"`
-	SafeRegexMatch SafeRegexMatch `json:"safe_regex_match,omitempty"`
-	RangeMatch     int64          `json:"range_match,omitempty"`
-	PresentMatch   int64          `json:"present_match,omitempty"`
-	PrefixMatch    string         `json:"prefix_match,omitempty"`
-	SuffixMatch    string         `json:"suffix_match,omitempty"`
-	ContainsMatch  bool           `json:"contains_match,omitempty"`
-	InvertMatch    int64          `json:"invert_match,omitempty"`
+	Name           string          `json:"name,required"`
+	ExactMatch     string          `json:"exact_match,omitempty"`
+	SafeRegexMatch *SafeRegexMatch `json:"safe_regex_match,omitempty"`
+	RangeMatch     int64           `json:"range_match,omitempty"`
+	PresentMatch   int64           `json:"present_match,omitempty"`
+	PrefixMatch    string          `json:"prefix_match,omitempty"`
+	SuffixMatch    string          `json:"suffix_match,omitempty"`
+	ContainsMatch  bool            `json:"contains_match,omitempty"`
+	InvertMatch    int64           `json:"invert_match,omitempty"`
 }
+
 //TODO: How to impl querymatcher
 //type QueryMatcher struct {
 //	Name         string `json:"name,required"`
@@ -71,10 +72,10 @@ type HeaderMatcher struct {
 //	PresentMatch string `json:"present_match,omitempty"`
 //}
 
-type GoogleRE2 struct {}
+type GoogleRE2 struct{}
 type SafeRegexMatch struct {
 	GoogleRe2 GoogleRE2 `json:"google_re2,required"`
-	Regex     string   `json:"regex,required"`
+	Regex     string    `json:"regex,required"`
 }
 
 type RequestHeader struct {
@@ -100,12 +101,12 @@ type RateLimits struct {
 	Actions []Actions `json:"actions"`
 }
 type Actions struct {
-	RequestHeader      RequestHeader      `json:"request_header,omitempty"`
-	HeaderValueMatch   HeaderValueMatch   `json:"header_value_match,omitempty"`
-	GenericKey         GenericKey         `json:"generic_key,omitempty"`
-	SourceCluster      SourceCluster      `json:"source_cluster,omitempty"`
-	DestinationCluster DestinationCluster `json:"destination_cluster,omitempty"`
-	RemoteAddress      string             `json:"remote_address,omitempty"`
+	RequestHeader      *RequestHeader      `json:"request_header,omitempty"`
+	HeaderValueMatch   *HeaderValueMatch   `json:"header_value_match,omitempty"`
+	GenericKey         *GenericKey         `json:"generic_key,omitempty"`
+	SourceCluster      *SourceCluster      `json:"source_cluster,omitempty"`
+	DestinationCluster *DestinationCluster `json:"destination_cluster,omitempty"`
+	RemoteAddress      string              `json:"remote_address,omitempty"`
 }
 
 // GlobalRateLimitStatus defines the observed state of GlobalRateLimit

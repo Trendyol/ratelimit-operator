@@ -51,11 +51,6 @@ func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, g
 	r.PrepareUpdateEnvoyFilterExternalObjects(ctx, global, namespace, name)
 }
 
-func getEmptyConfigMap() v1.ConfigMap {
-	//TODO
-	return v1.ConfigMap{}
-}
-
 func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimit, name, namespace string) error {
 	var err error
 	cmData, err := prepareConfigMapData(name, global)
@@ -67,42 +62,19 @@ func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimi
 	found := v1.ConfigMap{}
 
 	//TODO:fix if configmap doesn't exist create empty config map
-	found, err = r.getConfigMap("ratelimit-configmap2", namespace)
-	cm := v1.ConfigMap{}
-	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
-		err = r.client.Create(context.TODO(), &cm)
-		return nil
-	} else {
+	found, err = r.getConfigMap("ratelimit-configmap", "default")
+
+	if err == nil {
 		configMapKey := "config." + name + ".yaml"
 		found.Data[configMapKey] = cmData[configMapKey]
+
+		applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
+
+		r.client.Update(context.TODO(), &found, applyOpts...)
+		r.mutex.Lock()
+		defer r.mutex.Unlock()
+
 	}
-
-	applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
-
-	r.client.Update(context.TODO(), &found, applyOpts...)
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	//if err != nil {
-	//	err = r.client.Create(context.TODO(), &cm)
-	//	if err != nil {
-	//		//klog.Infof("Cannot create %v, Error: %v", cm, err.Error())
-	//	}
-	//} else {
-	//	applyOpts := []client.PatchOption{client.ForceOwnership, client.FieldOwner("globalratelimit-controller")}
-	//
-	//	r.client.Update(context.TODO(), &cm, applyOpts...)
-	//
-	//	klog.Infof("the 2 resources are not the same, we should patch the deployment")
-	//
-	//	err = r.client.Patch(context.TODO(), &cm, client.Apply, applyOpts...)
-	//	if err != nil {
-	//		klog.Infof("Cannot patch cm. Error: %v", err)
-	//		return err
-	//	}
-	//
-	//	r.mutex.Lock()
-	//	defer r.mutex.Unlock()
-	//}
 
 	return nil
 }
@@ -121,7 +93,31 @@ func (r *GlobalRateLimit) getConfigMap(name string, namespace string) (v1.Config
 	}
 
 	return found, nil
+}
 
+func (r *GlobalRateLimit) InitResources() v1.ConfigMap {
+	name := "ratelimit-configmap"
+	namespace := "default"
+	cm := v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{"generator": "ratelimit-operator"},
+		},
+		Data: map[string]string{
+			"a": "b",
+		},
+	}
+
+	//TODO: os.GetEnv || default name,namespace
+	foundCm, err := r.getConfigMap(name, namespace)
+	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
+		err = r.client.Create(context.TODO(), &cm)
+		return cm
+	} else {
+		return foundCm
+	}
 }
 
 func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[string]string, error) {
@@ -138,14 +134,15 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 		cfDescriptor.RateLimit.RequestsPerUnit = eachRate.RequestPerUnit
 		cfDescriptor.RateLimit.Unit = eachRate.Unit
 		for _, eachDimension := range eachRate.Dimensions {
-			if len(eachDimension.RequestHeader.DescriptorKey) > 0 {
+			if eachDimension.RequestHeader != nil {
 				cfDescriptor.Key = eachDimension.RequestHeader.DescriptorKey
 				cfDescriptor.Value = eachDimension.RequestHeader.Value
 			}
-			if len(eachDimension.HeaderValueMatch.HeaderMatcher) > 0 {
+			if eachDimension.HeaderValueMatch != nil {
 				cfDescriptor.Key = "header_match"
 				cfDescriptor.Value = eachDimension.HeaderValueMatch.DescriptorValue
 			}
+			//TODO:Other Match type
 			descriptors = append(descriptors, cfDescriptor)
 		}
 	}
@@ -175,7 +172,7 @@ type configMapValue struct {
 
 type configMapDescriptor struct {
 	Key       string                 `json:"key"`
-	Value     string                 `json:"value"`
+	Value     string                `json:"value,omitempty"`
 	RateLimit configMapRatelimitUnit `json:"rate_limit"`
 }
 

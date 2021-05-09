@@ -90,15 +90,19 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "LocalRateLimit")
 		os.Exit(1)
 	}
+	globalRateLimit := global.NewGlobalRateLimit(mgr.GetClient(), istio.NewIstioClient(mgr.GetConfig()))
 	if err = (&controllers.GlobalRateLimitReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("GlobalRateLimit"),
 		Scheme:          mgr.GetScheme(),
-		GlobalRateLimit: global.NewGlobalRateLimit(mgr.GetClient(), istio.NewIstioClient(mgr.GetConfig())),
+		GlobalRateLimit: globalRateLimit,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GlobalRateLimit")
 		os.Exit(1)
 	}
+	//Init k8s resources
+	globalRateLimit.InitResources()
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

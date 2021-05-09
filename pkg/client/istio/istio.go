@@ -13,8 +13,6 @@ import (
 	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
-const EnvoyFilterNamespace = "istio-system"
-
 type IstioClient interface {
     GetEnvoyFilter(ctx context.Context, namespace string, name string) (*v1alpha3.EnvoyFilter, error)
 	CreateEnvoyFilter(ctx context.Context, namespace string, envoyFilter *v1alpha3.EnvoyFilter) (*v1alpha3.EnvoyFilter, error)
@@ -43,38 +41,4 @@ func (r *istioClient) PatchEnvoyFilter(ctx context.Context, data []byte, namespa
 }
 func (r *istioClient) CreateEnvoyFilter(ctx context.Context, namespace string, envoyFilter *v1alpha3.EnvoyFilter) (*v1alpha3.EnvoyFilter, error) {
 	return r.client.NetworkingV1alpha3().EnvoyFilters(namespace).Create(ctx, envoyFilter, v1.CreateOptions{})
-	//a := nv1alpha3.EnvoyFilter_EnvoyConfigObjectPatch{
-	//	ApplyTo: nv1alpha3.EnvoyFilter_HTTP_FILTER,
-	//	Patch: &nv1alpha3.EnvoyFilter_Patch{
-	//		Operation: nv1alpha3.EnvoyFilter_Patch_INSERT_BEFORE,
-	//		Value: &types.Struct{
-	//			Fields: map[string]*types.Value{
-	//				"name": {
-	//					Kind: &types.Value_StringValue{
-	//						StringValue: "envoy.filters.http.local_ratelimit",
-	//					},
-	//				},
-	//				"typed_config": {
-	//					Kind: &types.Value_StructValue{
-	//						StructValue:types.str
-	//					},
-	//				},
-	//			},
-	//		},
-	//	},
-	//	//Match: nv1alpha3.EnvoyFilter_ListenerMatch{}
-	//}
-	//
-	//var configPacthes []*nv1alpha3.EnvoyFilter_EnvoyConfigObjectPatch
-	//e := &v1alpha3.EnvoyFilter{
-	//	Spec: nv1alpha3.EnvoyFilter{
-	//		WorkloadSelector: &nv1alpha3.WorkloadSelector{
-	//			Labels: map[string]string{
-	//				"app": localRateLimit.Spec.Workload,
-	//			},
-	//		},
-	//		ConfigPatches: configPacthes,
-	//	},
-	//}
-
 }

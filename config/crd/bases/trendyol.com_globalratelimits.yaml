@@ -101,7 +101,7 @@ spec:
                             type: object
                           remote_address:
                             type: string
-                          request_header:
+                          request_headers:
                             properties:
                               descriptor_key:
                                 type: string

@@ -51,7 +51,6 @@ var globalEnvoyFilterAction = `{
   }
 }`
 
-
 func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx context.Context, global *v1beta1.GlobalRateLimit, namespace, name string) {
 	rlAction := &v1beta1.RateLimitAction{}
 	var err error
@@ -62,12 +61,21 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 		var rateLimit v1beta1.RateLimits
 		for _, dimension := range eachRate.Dimensions {
 			action := v1beta1.Actions{}
-			//TODO: null or empty check
-			if len(dimension.HeaderValueMatch.DescriptorValue) > 0 {
+			//TODO: refactor here
+			if dimension.HeaderValueMatch != nil {
 				action.HeaderValueMatch = dimension.HeaderValueMatch
 			}
-			if len(dimension.RequestHeader.HeaderName) > 0 {
+			if dimension.RequestHeader != nil {
 				action.RequestHeader = dimension.RequestHeader
+			}
+			if dimension.SourceCluster != nil {
+				action.SourceCluster = dimension.SourceCluster
+			}
+			if dimension.DestinationCluster != nil {
+				action.DestinationCluster = dimension.DestinationCluster
+			}
+			if dimension.GenericKey != nil {
+				action.GenericKey = dimension.GenericKey
 			}
 			action.RemoteAddress = dimension.RemoteAddress
 			actions = append(actions, action)
