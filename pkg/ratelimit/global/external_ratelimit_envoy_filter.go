@@ -20,81 +20,117 @@ func NewGlobalRateLimitFilter(istio istio.IstioClient) *GlobalRateLimitFilter {
 }
 
 var globalRateLimitEnvoyFilter = `
-kind: EnvoyFilter
-apiVersion: networking.istio.io/v1alpha3
-metadata:
-  labels:
-    generator: ratelimit-operator
-  name: details-app-demo-ratelimit
-  namespace: default
-spec:
-  configPatches:
-    - applyTo: HTTP_FILTER
-      match:
-        context: SIDECAR_INBOUND
-        listener:
-          filterChain:
-            filter:
-              name: envoy.http_connection_manager
-              subFilter:
-                name: envoy.router
-      patch:
-        operation: INSERT_BEFORE
-        value:
-          name: envoy.filters.ratelimit
-          typed_config:
-            '@type': >-
-              type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
-            domain: productpage600-ratelimit
-            failure_mode_deny: false
-            rate_limit_service:
-              grpc_service:
-                envoy_grpc:
-                  cluster_name: rate_limit_cluster
-                timeout: 10s
-              transport_api_version: V3
-    - applyTo: CLUSTER
-      match:
-        cluster:
-          service: ratelimit.default
-      patch:
-        operation: ADD
-        value:
-          connect_timeout: 10s
-          http2_protocol_options: {}
-          lb_policy: ROUND_ROBIN
-          load_assignment:
-            cluster_name: rate_limit_cluster
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: ratelimit.default
-                          port_value: 8081
-          name: rate_limit_cluster
-          type: STRICT_DNS
-  workloadSelector:
-    labels:
-      app: details
+{
+  "kind": "EnvoyFilter",
+  "apiVersion": "networking.istio.io/v1alpha3",
+  "metadata": {
+    "labels": {
+      "generator": "ratelimit-operator"
+    },
+    "name": "%s-ratelimit-filter",
+    "namespace": "%s"
+  },
+  "spec": {
+    "configPatches": [
+      {
+        "applyTo": "HTTP_FILTER",
+        "match": {
+          "context": "SIDECAR_INBOUND",
+          "listener": {
+            "filterChain": {
+              "filter": {
+                "name": "envoy.http_connection_manager",
+                "subFilter": {
+                  "name": "envoy.router"
+                }
+              }
+            }
+          }
+        },
+        "patch": {
+          "operation": "INSERT_BEFORE",
+          "value": {
+            "name": "envoy.filters.ratelimit",
+            "typed_config": {
+              "@type": "type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit",
+              "domain": "%s",
+              "failure_mode_deny": false,
+              "rate_limit_service": {
+                "grpc_service": {
+                  "envoy_grpc": {
+                    "cluster_name": "rate_limit_cluster"
+                  }
+                },
+                "transport_api_version": "V3"
+              }
+            }
+          }
+        }
+      },
+      {
+        "applyTo": "CLUSTER",
+        "match": {
+          "cluster": {
+            "service": "ratelimit.default"
+          }
+        },
+        "patch": {
+          "operation": "ADD",
+          "value": {
+            "connect_timeout": "10s",
+            "http2_protocol_options": {},
+            "lb_policy": "ROUND_ROBIN",
+            "load_assignment": {
+              "cluster_name": "rate_limit_cluster",
+              "endpoints": [
+                {
+                  "lb_endpoints": [
+                    {
+                      "endpoint": {
+                        "address": {
+                          "socket_address": {
+                            "address": "ratelimit.default",
+                            "port_value": 8081
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "name": "rate_limit_cluster",
+            "type": "STRICT_DNS"
+          }
+        }
+      }
+    ],
+    "workloadSelector": {
+      "labels": {
+        "app": "%s"
+      }
+    }
+  }
+}
 `
 
 func (r *GlobalRateLimitFilter) PrepareUpdateEnvoyFilterExternalObjects(ctx context.Context, global *v1beta1.GlobalRateLimit, namespace, name string) {
 	var err error
 
 	patchValue, envoyFilterObj, err := getGlobalRateLimitEnvoyFilter(namespace, global)
+	efCustomName := name + "-ratelimit-filter"
 
-	_, err = r.istio.GetEnvoyFilter(ctx, namespace, name)
+	_, err = r.istio.GetEnvoyFilter(ctx, namespace, efCustomName)
 	if err != nil {
 		klog.Infof("Envoyfilter %s is not found. Error %v", name, err)
-		klog.Infof("Creating Envoyfilter %s", name)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilterObj)
 
 		if err != nil {
-			klog.Infof("Cannot get Ratelimit CR %s. Error %v", global.Name, err)
+			klog.Infof("EnvoyFilter created %s", name)
+
 		}
 	} else {
-		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, name)
+		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, efCustomName)
 		klog.Infof("Patching Envoyfilter %s", name)
 
 		if err != nil {

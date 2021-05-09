@@ -23,7 +23,7 @@ var globalEnvoyFilterAction = `{
   "kind": "EnvoyFilter",
   "apiVersion": "networking.istio.io/v1alpha3",
   "metadata": {
-    "name": "%s-ratelimit-actions",
+    "name": "%s-ratelimit-action",
     "namespace": "%s",
     "labels":{
      "generator": "ratelimit-operator"
@@ -89,7 +89,8 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 	pretty, _ := prettyPrint(strRlAction)
 	patchValue, envoyFilterObj, err := getGlobalEnvoyFilterAction(namespace, string(pretty), global)
 
-	_, err = r.istio.GetEnvoyFilter(ctx, namespace, name)
+	efCustomName := name + "-ratelimit-action"
+	_, err = r.istio.GetEnvoyFilter(ctx, namespace, efCustomName)
 	if err != nil {
 		klog.Infof("Envoyfilter %s is not found. Error %v", name, err)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilterObj)
@@ -99,7 +100,7 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 			klog.Infof("Cannot get Ratelimit CR %s. Error %v", global.Name, err)
 		}
 	} else {
-		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, name)
+		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, efCustomName)
 		klog.Infof("Patching Envoyfilter %s", name)
 
 		if err != nil {
