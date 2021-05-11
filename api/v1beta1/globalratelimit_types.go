@@ -101,7 +101,7 @@ type RateLimits struct {
 	Actions []Actions `json:"actions"`
 }
 type Actions struct {
-	RequestHeader      *RequestHeader      `json:"request_header,omitempty"`
+	RequestHeader      *RequestHeader      `json:"request_headers,omitempty"`
 	HeaderValueMatch   *HeaderValueMatch   `json:"header_value_match,omitempty"`
 	GenericKey         *GenericKey         `json:"generic_key,omitempty"`
 	SourceCluster      *SourceCluster      `json:"source_cluster,omitempty"`

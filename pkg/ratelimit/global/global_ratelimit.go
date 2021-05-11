@@ -3,6 +3,7 @@ package global
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/ghodss/yaml"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
@@ -14,6 +15,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
 )
+
+var EnvoyFilterNames = []string{
+	"%s-ratelimit-action",
+	"%s-ratelimit-filter",
+}
 
 type GlobalRateLimit struct {
 	*GlobalRateLimitAction
@@ -33,9 +39,32 @@ func NewGlobalRateLimit(client client.Client, istioClient istio.IstioClient) *Gl
 }
 
 func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, name, namespace string) {
+	for _, each := range EnvoyFilterNames {
+		filterName := fmt.Sprintf(each, name)
+		err := r.DeleteEnvoyFilterObjects(ctx, filterName, namespace)
+		if err != nil {
+			klog.Infof("Error when delete envoyfilter %s", filterName)
+		}
+	}
 
-	//TODO: Delete Envoy filters
-	// Patch Configmap
+	found := v1.ConfigMap{}
+
+	//TODO:configmapname default
+	found, err := r.getConfigMap("ratelimit-configmap", "default")
+	if err != nil {
+		klog.Infof("Configmap not found name: %s", "ratelimit-configmap")
+
+	}
+	configMapKey := "config." + name + ".yaml"
+
+	//nil check
+	if len(found.Data) > 0 {
+		delete(found.Data, configMapKey)
+	}
+
+	applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
+
+	r.client.Update(context.TODO(), &found, applyOpts...)
 }
 
 func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v1beta1.GlobalRateLimit, name, namespace string) {
@@ -51,6 +80,10 @@ func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, g
 	r.PrepareUpdateEnvoyFilterExternalObjects(ctx, global, namespace, name)
 }
 
+func (r *GlobalRateLimit) DeleteEnvoyFilterObjects(ctx context.Context, name, namespace string) error {
+	return r.istio.DeleteEnvoyFilter(ctx, namespace, name)
+}
+
 func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimit, name, namespace string) error {
 	var err error
 	cmData, err := prepareConfigMapData(name, global)
@@ -60,11 +93,14 @@ func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimi
 	}
 
 	found := v1.ConfigMap{}
-
+	var configMapData = make(map[string]string, 0)
 	//TODO:fix if configmap doesn't exist create empty config map
 	found, err = r.getConfigMap("ratelimit-configmap", "default")
 
 	if err == nil {
+		if found.Data == nil {
+			found.Data = configMapData
+		}
 		configMapKey := "config." + name + ".yaml"
 		found.Data[configMapKey] = cmData[configMapKey]
 
@@ -105,9 +141,7 @@ func (r *GlobalRateLimit) InitResources() v1.ConfigMap {
 			Namespace: namespace,
 			Labels:    map[string]string{"generator": "ratelimit-operator"},
 		},
-		Data: map[string]string{
-			"a": "b",
-		},
+		Data: make(map[string]string, 0),
 	}
 
 	//TODO: os.GetEnv || default name,namespace
@@ -172,7 +206,7 @@ type configMapValue struct {
 
 type configMapDescriptor struct {
 	Key       string                 `json:"key"`
-	Value     string                `json:"value,omitempty"`
+	Value     string                 `json:"value,omitempty"`
 	RateLimit configMapRatelimitUnit `json:"rate_limit"`
 }
 
