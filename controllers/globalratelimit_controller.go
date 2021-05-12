@@ -57,18 +57,24 @@ func (r *GlobalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	name := req.Name
 	namespace := req.Namespace
-	_ = r.Log.WithValues("globalratelimit", req.NamespacedName)
 	globalRateLimitInstance := &trendyolcomv1beta1.GlobalRateLimit{}
 	err := r.Get(context.TODO(), types.NamespacedName{
 		Namespace: namespace,
 		Name:      req.Name,
 	}, globalRateLimitInstance)
+	//If resource deleted set from request
+	if len(globalRateLimitInstance.Name) == 0 {
+		globalRateLimitInstance.Name = name
+		globalRateLimitInstance.Namespace = namespace
+	}
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
-		r.GlobalRateLimit.DecommissionResources(ctx, name, namespace)
+		r.GlobalRateLimit.DecommissionResources(ctx,globalRateLimitInstance)
 		return ctrl.Result{}, nil
 	}
-	r.GlobalRateLimit.CreateOrUpdateResources(ctx, globalRateLimitInstance, name, namespace)
+
+
+	r.GlobalRateLimit.CreateOrUpdateResources(ctx, globalRateLimitInstance)
 	return ctrl.Result{}, nil
 }
 

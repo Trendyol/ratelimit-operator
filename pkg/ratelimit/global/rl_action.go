@@ -11,12 +11,17 @@ import (
 	"k8s.io/klog"
 )
 
-type GlobalRateLimitAction struct {
-	istio istio.IstioClient
+var rLocalEnvoyFilterSuffixName = "-ratelimit-action"
+
+type RlAction interface {
+	PrepareUpdateEnvoyFilterActionObjects(ctx context.Context, global *v1beta1.GlobalRateLimit)
+}
+type globalRateLimitAction struct {
+	istio istio.Istio
 }
 
-func NewGlobalRateLimitAction(istio istio.IstioClient) *GlobalRateLimitAction {
-	return &GlobalRateLimitAction{istio: istio}
+func NewGlobalRateLimitAction(istio istio.Istio) RlAction {
+	return &globalRateLimitAction{istio: istio}
 }
 
 var globalEnvoyFilterAction = `{
@@ -51,12 +56,12 @@ var globalEnvoyFilterAction = `{
   }
 }`
 
-func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx context.Context, global *v1beta1.GlobalRateLimit, namespace, name string) {
+func (r *globalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx context.Context, instance *v1beta1.GlobalRateLimit) {
 	rlAction := &v1beta1.RateLimitAction{}
 	var err error
 	var rateLimits []v1beta1.RateLimits
 
-	for _, eachRate := range global.Spec.Rate {
+	for _, eachRate := range instance.Spec.Rate {
 		var actions []v1beta1.Actions
 		var rateLimit v1beta1.RateLimits
 		for _, dimension := range eachRate.Dimensions {
@@ -84,27 +89,29 @@ func (r *GlobalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 
 		rateLimits = append(rateLimits, rateLimit)
 	}
+
 	rlAction.RateLimits = rateLimits
 	strRlAction, _ := json.Marshal(&rlAction)
 	pretty, _ := prettyPrint(strRlAction)
-	patchValue, envoyFilterObj, err := getGlobalEnvoyFilterAction(namespace, string(pretty), global)
 
-	efCustomName := name + "-ratelimit-action"
-	_, err = r.istio.GetEnvoyFilter(ctx, namespace, efCustomName)
+	namespace := instance.Namespace
+	name:= getActionEnvoyFilterName(instance.Name)
+	patchValue, envoyFilterObj, err := getGlobalEnvoyFilterAction(namespace, string(pretty), instance)
+
+	_, err = r.istio.GetEnvoyFilter(ctx, namespace, name)
 	if err != nil {
-		klog.Infof("Envoyfilter %s is not found. Error %v", name, err)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilterObj)
 		klog.Infof("Creating Envoyfilter %s", name)
 
 		if err != nil {
-			klog.Infof("Cannot get Ratelimit CR %s. Error %v", global.Name, err)
+			klog.Infof("Cannot get Ratelimit CR %s. Error %v", instance.Name, err)
 		}
 	} else {
-		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, efCustomName)
+		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, name)
 		klog.Infof("Patching Envoyfilter %s", name)
 
 		if err != nil {
-			klog.Infof("Cannot path Ratelimit CR %s. Error %v", global.Name, err)
+			klog.Infof("Cannot path Ratelimit CR %s. Error %v", instance.Name, err)
 		}
 	}
 
@@ -125,4 +132,8 @@ func prettyPrint(b []byte) ([]byte, error) {
 	var out bytes.Buffer
 	err := json.Indent(&out, b, "", "  ")
 	return out.Bytes(), err
+}
+
+func getActionEnvoyFilterName(crdName string) string {
+	return crdName + rLocalEnvoyFilterSuffixName
 }

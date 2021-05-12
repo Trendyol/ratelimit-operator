@@ -13,6 +13,6 @@ func Test_CreateEnvoyFilter(t *testing.T) {
 	//data, error := fakeIstioClient.CreateEnvoyFilter()
 }
 
-func fakeClient() IstioClient {
+func fakeClient() Istio {
 	return &istioClient{client: fake.NewSimpleClientset()}
 }

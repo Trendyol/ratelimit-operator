@@ -13,7 +13,7 @@ import (
 	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
-type IstioClient interface {
+type Istio interface {
     GetEnvoyFilter(ctx context.Context, namespace string, name string) (*v1alpha3.EnvoyFilter, error)
 	CreateEnvoyFilter(ctx context.Context, namespace string, envoyFilter *v1alpha3.EnvoyFilter) (*v1alpha3.EnvoyFilter, error)
 	DeleteEnvoyFilter(ctx context.Context, namespace, name string) error
@@ -24,7 +24,7 @@ type istioClient struct {
 	client versionedclient.Interface
 }
 
-func NewIstioClient(cfg *rest.Config) IstioClient {
+func NewIstioClient(cfg *rest.Config) Istio {
 	clientSet := versionedclient.NewForConfigOrDie(cfg)
 	return &istioClient{cfg: cfg, client: clientSet}
 }

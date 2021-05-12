@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/global"
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/local"
 	"os"
 
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
@@ -85,7 +86,7 @@ func main() {
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("LocalRateLimit"),
 		Scheme:      mgr.GetScheme(),
-		IstioClient: istio.NewIstioClient(mgr.GetConfig()),
+		Local:       local.NewLocalRateLimit(mgr.GetClient(), istio.NewIstioClient(mgr.GetConfig())),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LocalRateLimit")
 		os.Exit(1)

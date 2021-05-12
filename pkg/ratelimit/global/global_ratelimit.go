@@ -16,32 +16,34 @@ import (
 	"sync"
 )
 
+var RlConfigMapName = "ratelimit-configmap"
+var RlConfigMapNameSpace = "default"
 var EnvoyFilterNames = []string{
 	"%s-ratelimit-action",
 	"%s-ratelimit-filter",
 }
 
 type GlobalRateLimit struct {
-	*GlobalRateLimitAction
-	*GlobalRateLimitFilter
+	RlAction
+	RlFilter
 	client client.Client
 	mutex  sync.RWMutex
-	istio  istio.IstioClient
+	istio  istio.Istio
 }
 
-func NewGlobalRateLimit(client client.Client, istioClient istio.IstioClient) *GlobalRateLimit {
+func NewGlobalRateLimit(client client.Client, istioClient istio.Istio) *GlobalRateLimit {
 	return &GlobalRateLimit{
-		GlobalRateLimitAction: NewGlobalRateLimitAction(istioClient),
-		GlobalRateLimitFilter: NewGlobalRateLimitFilter(istioClient),
-		client:                client,
-		istio:                 istioClient,
+		RlAction: NewGlobalRateLimitAction(istioClient),
+		RlFilter: NewGlobalRateLimitFilter(istioClient),
+		client:   client,
+		istio:    istioClient,
 	}
 }
 
-func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, name, namespace string) {
+func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v1beta1.GlobalRateLimit) {
 	for _, each := range EnvoyFilterNames {
-		filterName := fmt.Sprintf(each, name)
-		err := r.DeleteEnvoyFilterObjects(ctx, filterName, namespace)
+		filterName := fmt.Sprintf(each, instance.Name)
+		err := r.DeleteEnvoyFilterObjects(ctx, filterName, instance.Namespace)
 		if err != nil {
 			klog.Infof("Error when delete envoyfilter %s", filterName)
 		}
@@ -49,43 +51,48 @@ func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, name, names
 
 	found := v1.ConfigMap{}
 
-	//TODO:configmapname default
-	found, err := r.getConfigMap("ratelimit-configmap", "default")
+	found, err := r.getConfigMap(RlConfigMapName, RlConfigMapNameSpace)
 	if err != nil {
-		klog.Infof("Configmap not found name: %s", "ratelimit-configmap")
+		klog.Infof("Configmap not found name: %s", RlConfigMapName)
 
+	} else {
+		configMapKey := "config." + instance.Name + ".yaml"
+
+		if len(found.Data) > 0 {
+			delete(found.Data, configMapKey)
+		}
+
+		applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
+
+		err := r.client.Update(context.TODO(), &found, applyOpts...)
+
+		if err != nil {
+			klog.Infof("Error update configmap domain name  %s", configMapKey, err)
+		}
 	}
-	configMapKey := "config." + name + ".yaml"
 
-	//nil check
-	if len(found.Data) > 0 {
-		delete(found.Data, configMapKey)
-	}
-
-	applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
-
-	r.client.Update(context.TODO(), &found, applyOpts...)
 }
 
-func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v1beta1.GlobalRateLimit, name, namespace string) {
-	r.PrepareUpdateEnvoyFilterObjects(ctx, global, name, namespace)
-	err := r.CreateOrUpdateConfigMap(global, name, namespace)
+func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v1beta1.GlobalRateLimit) {
+	r.PrepareUpdateEnvoyFilterObjects(ctx, global)
+	err := r.CreateOrUpdateConfigMap(global)
 	if err != nil {
 		return
 	}
 }
 
-func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.GlobalRateLimit, name, namespace string) {
-	r.PrepareUpdateEnvoyFilterActionObjects(ctx, global, namespace, name)
-	r.PrepareUpdateEnvoyFilterExternalObjects(ctx, global, namespace, name)
+func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.GlobalRateLimit) {
+	r.PrepareUpdateEnvoyFilterActionObjects(ctx, global)
+	r.PrepareUpdateEnvoyFilterExternalObjects(ctx, global)
 }
 
 func (r *GlobalRateLimit) DeleteEnvoyFilterObjects(ctx context.Context, name, namespace string) error {
 	return r.istio.DeleteEnvoyFilter(ctx, namespace, name)
 }
 
-func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimit, name, namespace string) error {
+func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimit) error {
 	var err error
+	name := global.Name
 	cmData, err := prepareConfigMapData(name, global)
 	if err != nil {
 		klog.Infof("Cannot generate %v, Error: %v", cmData, err)
@@ -94,8 +101,7 @@ func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimi
 
 	found := v1.ConfigMap{}
 	var configMapData = make(map[string]string, 0)
-	//TODO:fix if configmap doesn't exist create empty config map
-	found, err = r.getConfigMap("ratelimit-configmap", "default")
+	found, err = r.getConfigMap(RlConfigMapName, RlConfigMapNameSpace)
 
 	if err == nil {
 		if found.Data == nil {
@@ -104,7 +110,7 @@ func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimi
 		configMapKey := "config." + name + ".yaml"
 		found.Data[configMapKey] = cmData[configMapKey]
 
-		applyOpts := []client.UpdateOption{client.FieldOwner("globalratelimit-controller")}
+		applyOpts := []client.UpdateOption{client.FieldOwner("ratelimit-controller")}
 
 		r.client.Update(context.TODO(), &found, applyOpts...)
 		r.mutex.Lock()
@@ -132,8 +138,8 @@ func (r *GlobalRateLimit) getConfigMap(name string, namespace string) (v1.Config
 }
 
 func (r *GlobalRateLimit) InitResources() v1.ConfigMap {
-	name := "ratelimit-configmap"
-	namespace := "default"
+	name := RlConfigMapName
+	namespace := RlConfigMapNameSpace
 	cm := v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -199,6 +205,7 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 	return configMapData, nil
 }
 
+//TODO:Nested descriptor
 type configMapValue struct {
 	Domain      string                `json:"domain"`
 	Descriptors []configMapDescriptor `json:"descriptors"`

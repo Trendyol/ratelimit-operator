@@ -2,17 +2,23 @@ package local
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
+	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var localRateLimit = `{
+var rLocalEnvoyFilterSuffixName = "-local-ratelimit"
+
+var localRateLimitEf = `{
     "apiVersion": "networking.istio.io/v1alpha3",
     "kind": "EnvoyFilter",
     "metadata": {
-        "name": "%s-local-ratelimit",
+        "name": "%s",
         "namespace": "%s"
     },
     "spec": {
@@ -77,15 +83,59 @@ var localRateLimit = `{
     }
 }`
 
-func GetLocalRateLimitEnvoyFilter(namespace string, limit *v1beta1.LocalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
+type localRateLimit struct {
+	client client.Client
+	istio  istio.Istio
+}
+
+type LocalRateLimit interface {
+	DecommissionResources(ctx context.Context, name, namespace string) error
+	PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.LocalRateLimit, name, namespace string)
+}
+
+func NewLocalRateLimit(client client.Client, istioClient istio.Istio) LocalRateLimit {
+	return &localRateLimit{
+		client: client,
+		istio:  istioClient,
+	}
+}
+
+func (r *localRateLimit) DecommissionResources(ctx context.Context, name, namespace string) error {
+	return r.istio.DeleteEnvoyFilter(ctx, namespace, getEnvoyFilterName(name))
+}
+
+func (r *localRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, instance *v1beta1.LocalRateLimit, name, namespace string) {
+	var err error
+	patch, envoyFilter, err := getLocalRateLimitEnvoyFilter(namespace, instance)
+	if err != nil {
+		klog.Infof("Envoyfilter %s is not found. Error %v", instance, err)
+		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilter)
+		klog.Infof("Creating Envoyfilter %s", instance)
+
+		if err != nil {
+			klog.Infof("Cannot create Ratelimit CR %s. Error %v", instance.Name, err)
+		}
+	} else {
+		_, err := r.istio.PatchEnvoyFilter(ctx, patch, namespace, envoyFilter.Name)
+		klog.Infof("Patching Envoyfilter %s", envoyFilter.Name)
+
+		if err != nil {
+			klog.Infof("Cannot path Ratelimit CR %s. Error %v", instance.Name, err)
+		}
+	}
+}
+func getLocalRateLimitEnvoyFilter(namespace string, limit *v1beta1.LocalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
 	tokenBucket := limit.Spec.TokenBucket
 	envoyFilter := v1alpha3.EnvoyFilter{}
-
-	printf := fmt.Sprintf(localRateLimit, limit.Name, namespace, tokenBucket.FillInterval, tokenBucket.MaxTokens, tokenBucket.TokensPerFill, limit.Spec.Workload)
+	printf := fmt.Sprintf(localRateLimitEf, getEnvoyFilterName(limit.Name), namespace, tokenBucket.FillInterval, tokenBucket.MaxTokens, tokenBucket.TokensPerFill, limit.Spec.Workload)
 	byte := bytes.NewBufferString(printf).Bytes()
 	err := json.Unmarshal(byte, &envoyFilter)
 	if err != nil {
 		return nil, nil, err
 	}
 	return byte, &envoyFilter, nil
+}
+
+func getEnvoyFilterName(crdName string) string {
+	return crdName + rLocalEnvoyFilterSuffixName
 }

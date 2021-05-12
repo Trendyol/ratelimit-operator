@@ -1,26 +1,9 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package controllers
 
 import (
 	"context"
 	"github.com/go-logr/logr"
 	trendyolcomv1beta1 "gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
-	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/ratelimit/local"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,9 +17,9 @@ import (
 // LocalRateLimitReconciler reconciles a LocalRateLimit object
 type LocalRateLimitReconciler struct {
 	client.Client
-	Log         logr.Logger
-	Scheme      *runtime.Scheme
-	IstioClient istio.IstioClient
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+	Local  local.LocalRateLimit
 }
 
 //+kubebuilder:rbac:groups=trendyol.com,resources=localratelimits,verbs=get;list;watch;create;update;patch;delete
@@ -53,58 +36,25 @@ type LocalRateLimitReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
 	namespace := req.Namespace
+	name := req.Name
 	_ = r.Log.WithValues("localratelimit", req.NamespacedName)
 	localRateLimitInstance := &trendyolcomv1beta1.LocalRateLimit{}
 	err := r.Get(context.TODO(), types.NamespacedName{
 		Namespace: namespace,
 		Name:      req.Name,
 	}, localRateLimitInstance)
-	localEnvoyFilterName := req.Name + "-local-ratelimit"
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
-		r.IstioClient.DeleteEnvoyFilter(ctx, namespace, localEnvoyFilterName)
-		return ctrl.Result{}, nil
-	}
-
-	if err != nil {
-		klog.Infof("Cannot get LocalRatelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-
-	err = local.Validate(localRateLimitInstance)
-	if err != nil {
-		klog.Infof("Schema validation for LocalRatelimit CR %s is not valid. Error %v", localRateLimitInstance.Name, err)
-		return ctrl.Result{}, nil
-	}
-
-	patch, envoyFilter, err := local.GetLocalRateLimitEnvoyFilter(namespace, localRateLimitInstance)
-
-	if err != nil {
-		klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-		return ctrl.Result{}, nil
-	}
-
-	_, err = r.IstioClient.GetEnvoyFilter(ctx, namespace, localEnvoyFilterName)
-	if err != nil {
-		klog.Infof("Envoyfilter %s is not found. Error %v", localEnvoyFilterName, err)
-		klog.Infof("Creating Envoyfilter %s", localEnvoyFilterName)
-		_, err = r.IstioClient.CreateEnvoyFilter(ctx, namespace, envoyFilter)
-
+		err := r.Local.DecommissionResources(ctx, name, namespace)
 		if err != nil {
-			klog.Infof("Cannot get Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-			return ctrl.Result{}, nil
+			klog.Infof("Cannot delete localRatelimit CR %s. Error %v", localRateLimitInstance.Name, err)
+			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-	} else {
-		_, err := r.IstioClient.PatchEnvoyFilter(ctx, patch, namespace, localEnvoyFilterName)
-		klog.Infof("Patching Envoyfilter %s", localEnvoyFilterName)
-
-		if err != nil {
-			klog.Infof("Cannot path Ratelimit CR %s. Error %v", localRateLimitInstance.Name, err)
-			return ctrl.Result{}, nil
-		}
+		return ctrl.Result{}, nil
 	}
+
+	r.Local.PrepareUpdateEnvoyFilterObjects(ctx, localRateLimitInstance, name, namespace)
 	return ctrl.Result{}, nil
 }
 

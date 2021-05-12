@@ -11,12 +11,18 @@ import (
 	"k8s.io/klog"
 )
 
-type GlobalRateLimitFilter struct {
-	istio istio.IstioClient
+var RlEnvoyFilterSuffixName = "-ratelimit-filter"
+
+type RlFilter interface {
+	PrepareUpdateEnvoyFilterExternalObjects(ctx context.Context, global *v1beta1.GlobalRateLimit)
 }
 
-func NewGlobalRateLimitFilter(istio istio.IstioClient) *GlobalRateLimitFilter {
-	return &GlobalRateLimitFilter{istio: istio}
+type globalRateLimitFilter struct {
+	istio istio.Istio
+}
+
+func NewGlobalRateLimitFilter(istio istio.Istio) RlFilter {
+	return &globalRateLimitFilter{istio: istio}
 }
 
 var globalRateLimitEnvoyFilter = `
@@ -27,7 +33,7 @@ var globalRateLimitEnvoyFilter = `
     "labels": {
       "generator": "ratelimit-operator"
     },
-    "name": "%s-ratelimit-filter",
+    "name": "%s",
     "namespace": "%s"
   },
   "spec": {
@@ -114,41 +120,46 @@ var globalRateLimitEnvoyFilter = `
 }
 `
 
-func (r *GlobalRateLimitFilter) PrepareUpdateEnvoyFilterExternalObjects(ctx context.Context, global *v1beta1.GlobalRateLimit, namespace, name string) {
+func (r *globalRateLimitFilter) PrepareUpdateEnvoyFilterExternalObjects(ctx context.Context, instance *v1beta1.GlobalRateLimit) {
 	var err error
 
-	patchValue, envoyFilterObj, err := getGlobalRateLimitEnvoyFilter(namespace, global)
-	efCustomName := name + "-ratelimit-filter"
+	name := instance.Name
+	namespace := instance.Namespace
+
+	patchValue, envoyFilterObj, err := getGlobalRateLimitEnvoyFilter(namespace, instance)
+	efCustomName := name + RlEnvoyFilterSuffixName
 
 	_, err = r.istio.GetEnvoyFilter(ctx, namespace, efCustomName)
 	if err != nil {
-		klog.Infof("Envoyfilter %s is not found. Error %v", name, err)
+		klog.Infof("Envoyfilter %s is not found. Error %v", efCustomName)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilterObj)
 
 		if err != nil {
-			klog.Infof("EnvoyFilter created %s", name)
+			klog.Infof("EnvoyFilter created %s", efCustomName)
 
 		}
 	} else {
 		_, err := r.istio.PatchEnvoyFilter(ctx, patchValue, namespace, efCustomName)
-		klog.Infof("Patching Envoyfilter %s", name)
+		klog.Infof("Patching Envoyfilter %s", efCustomName)
 
 		if err != nil {
-			klog.Infof("Cannot path Ratelimit CR %s. Error %v", global.Name, err)
+			klog.Infof("Cannot path Ratelimit CR %s. Error %v", efCustomName, err)
 		}
 	}
-
 }
 
 func getGlobalRateLimitEnvoyFilter(namespace string, limit *v1beta1.GlobalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
 	domain := limit.Spec.Domain
 	envoyFilter := v1alpha3.EnvoyFilter{}
-
-	printf := fmt.Sprintf(globalRateLimitEnvoyFilter, limit.Name, namespace, domain, limit.Spec.Workload)
+	printf := fmt.Sprintf(globalRateLimitEnvoyFilter, getEnvoyFilterName(limit.Name), namespace, domain, limit.Spec.Workload)
 	byte := bytes.NewBufferString(printf).Bytes()
 	err := json.Unmarshal(byte, &envoyFilter)
 	if err != nil {
 		return nil, nil, err
 	}
 	return byte, &envoyFilter, nil
+}
+
+func getEnvoyFilterName(crdName string) string {
+	return crdName + RlEnvoyFilterSuffixName
 }
