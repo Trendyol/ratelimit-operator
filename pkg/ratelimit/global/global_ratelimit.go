@@ -186,6 +186,8 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 			descriptors = append(descriptors, cfDescriptor)
 		}
 	}
+
+	//TODO: Check duplicate domain
 	value.Descriptors = descriptors
 	configMapKey := "config." + name + ".yaml"
 	var output []byte
