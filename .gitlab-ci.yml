@@ -1,0 +1,22 @@
+variables:
+  NAMESPACE: platform
+
+stages:
+  - test
+  - build
+  - deploy
+
+test:
+  stage: test
+  image: registry.trendyol.com/platform/base/image/golang:1.15-alpine
+  services:
+    - docker:19.03.5-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - go test ./...
+  except:
+    - tags
+  only:
+    - master
