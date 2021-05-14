@@ -100,12 +100,14 @@ spec:
                             - headers
                             type: object
                           remote_address:
-                            type: string
+                            type: object
                           request_headers:
                             properties:
                               descriptor_key:
                                 type: string
                               header_name:
+                                type: string
+                              skip_if_absent:
                                 type: string
                               value:
                                 type: string

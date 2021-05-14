@@ -78,7 +78,8 @@ var globalRateLimitEnvoyFilter = `
         "match": {
           "cluster": {
             "service": "ratelimit.default"
-          }
+          },
+          "context": "SIDECAR_INBOUND"
         },
         "patch": {
           "operation": "ADD",
@@ -126,12 +127,12 @@ func (r *globalRateLimitFilter) PrepareUpdateEnvoyFilterExternalObjects(ctx cont
 	name := instance.Name
 	namespace := instance.Namespace
 
-	patchValue, envoyFilterObj, err := getGlobalRateLimitEnvoyFilter(namespace, instance)
+	patchValue, envoyFilterObj, err := GetGlobalRateLimitEnvoyFilter(namespace, instance)
 	efCustomName := name + RlEnvoyFilterSuffixName
 
 	_, err = r.istio.GetEnvoyFilter(ctx, namespace, efCustomName)
 	if err != nil {
-		klog.Infof("Envoyfilter %s is not found. Error %v", efCustomName)
+		klog.Infof("Envoyfilter %s is not found. Error %v", efCustomName, err)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilterObj)
 
 		if err != nil {
@@ -148,7 +149,7 @@ func (r *globalRateLimitFilter) PrepareUpdateEnvoyFilterExternalObjects(ctx cont
 	}
 }
 
-func getGlobalRateLimitEnvoyFilter(namespace string, limit *v1beta1.GlobalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
+func GetGlobalRateLimitEnvoyFilter(namespace string, limit *v1beta1.GlobalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
 	domain := limit.Spec.Domain
 	envoyFilter := v1alpha3.EnvoyFilter{}
 	printf := fmt.Sprintf(globalRateLimitEnvoyFilter, getEnvoyFilterName(limit.Name), namespace, domain, limit.Spec.Workload)

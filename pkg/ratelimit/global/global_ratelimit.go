@@ -67,7 +67,7 @@ func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v
 		err := r.client.Update(context.TODO(), &found, applyOpts...)
 
 		if err != nil {
-			klog.Infof("Error update configmap domain name  %s", configMapKey, err)
+			klog.Infof("Error update configmap domain name  %s ", configMapKey)
 		}
 	}
 
@@ -182,12 +182,27 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 				cfDescriptor.Key = "header_match"
 				cfDescriptor.Value = eachDimension.HeaderValueMatch.DescriptorValue
 			}
-			//TODO:Other Match type
+
+			if eachDimension.RemoteAddress != nil {
+				cfDescriptor.Key = "remote_address"
+			}
+
+			if eachDimension.GenericKey != nil {
+				cfDescriptor.Key = eachDimension.GenericKey.DescriptorKey
+				cfDescriptor.Value = eachDimension.GenericKey.DescriptorValue
+			}
+
+			if eachDimension.SourceCluster!=nil{
+				cfDescriptor.Key = "source_cluster"
+			}
+
+			if eachDimension.DestinationCluster!=nil{
+				cfDescriptor.Key = "destination_cluster"
+			}
 			descriptors = append(descriptors, cfDescriptor)
 		}
 	}
 
-	//TODO: Check duplicate domain
 	value.Descriptors = descriptors
 	configMapKey := "config." + name + ".yaml"
 	var output []byte
