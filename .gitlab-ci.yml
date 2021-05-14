@@ -8,7 +8,7 @@ stages:
 
 test:
   stage: test
-  image: registry.trendyol.com/platform/base/image/golang:1.15-alpine
+  image: registry.trendyol.com/platform/base/image/golang:1.15-alpine3.12
   services:
     - docker:19.03.5-dind
   variables:
