@@ -3,20 +3,41 @@ variables:
 
 stages:
   - test
-  - build
-  - deploy
 
-test:
+test & coverage:
   stage: test
-  image: registry.trendyol.com/platform/base/image/golang:1.15-alpine3.12
-  services:
-    - docker:19.03.5-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+  image: ${GITLAB_REGISTRY_HOST}/platform/base/image/sonar-go:latest
+  cache:
+    paths:
+      - .go_modules
+  # only:
+  #   refs:
+  #     - branches
+  # except:
+  #   refs:
+  #     - develop
+  #     - /^hotfix-.*$/
+  #     - tags
   script:
-    - go test ./...
-  except:
-    - tags
-  only:
-    - master
+    - export GOPROXY=https://proxy.golang.org
+    - export GOPATH=$(pwd)/.go_modules
+    - export PATH=$PATH:$(pwd)/.go_modules/bin
+    - echo $(go env GOROOT)
+    - echo $(go env GOPATH)
+    - go mod download
+    - |-
+      OLDIFS="$IFS";
+      IFS=$'\n';
+      for command in $(cat Dockerfile | grep -E 'RUN (go (get|install)|easyjson) .*$' | sed -n 's/^RUN //p'); do
+        echo $command
+        eval $command;
+      done;
+      IFS="$OLDIFS";
+    - go generate ./...
+    - go test ./... -coverprofile=coverage.out -json
+    - |-
+      sonar-scanner -Dsonar.projectKey=platform-runtime:$CI_PROJECT_NAME -Dsonar.projectName=$CI_PROJECT_NAME \
+        -Dsonar.projectBaseDir=./ -Dsonar.host.url=$SONARQUBE_ADDRESS -Dsonar.login=$SONARQUBE_TOKEN \
+  when: manual
+  allow_failure: false
+
