@@ -68,6 +68,10 @@ func (r *GlobalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		globalRateLimitInstance.Namespace = namespace
 	}
 
+	//ToDO: maybe we can manage it with Reconcile loop
+	//Init k8s resources
+	r.GlobalRateLimit.InitResources()
+
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
 		r.GlobalRateLimit.DecommissionResources(ctx, globalRateLimitInstance)
 		return ctrl.Result{}, nil

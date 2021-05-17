@@ -101,8 +101,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GlobalRateLimit")
 		os.Exit(1)
 	}
-	//Init k8s resources
-	globalRateLimit.InitResources()
 
 	//+kubebuilder:scaffold:builder
 
