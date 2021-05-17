@@ -6,7 +6,7 @@ stages:
 
 build:
   stage: build
-  image: golang
+  image: registry.trendyol.com/platform/base/image/docker:19.03.9-dind
   services:
     - docker:19.03.5-dind
   variables:
