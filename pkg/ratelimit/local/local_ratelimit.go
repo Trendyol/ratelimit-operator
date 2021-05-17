@@ -106,11 +106,15 @@ func (r *localRateLimit) DecommissionResources(ctx context.Context, name, namesp
 
 func (r *localRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, instance *v1beta1.LocalRateLimit, name, namespace string) {
 	var err error
-	patch, envoyFilter, err := getLocalRateLimitEnvoyFilter(namespace, instance)
+
+	patch, envoyFilter, _ := getLocalRateLimitEnvoyFilter(namespace, instance)
+
+	_ , err = r.istio.GetEnvoyFilter(ctx, namespace, getEnvoyFilterName(name))
+
 	if err != nil {
-		klog.Infof("Envoyfilter %s is not found. Error %v", instance, err)
+		klog.Infof("Envoyfilter %s is not found. Error %v", instance.Name, err)
 		_, err = r.istio.CreateEnvoyFilter(ctx, namespace, envoyFilter)
-		klog.Infof("Creating Envoyfilter %s", instance)
+		klog.Infof("Creating Envoyfilter %s", instance.Name)
 
 		if err != nil {
 			klog.Infof("Cannot create Ratelimit CR %s. Error %v", instance.Name, err)
