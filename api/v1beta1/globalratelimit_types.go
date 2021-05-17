@@ -44,7 +44,7 @@ type Dimensions struct {
 	GenericKey         *GenericKey         `json:"generic_key,omitempty"`
 	SourceCluster      *SourceCluster      `json:"source_cluster,omitempty"`
 	DestinationCluster *DestinationCluster `json:"destination_cluster,omitempty"`
-	RemoteAddress      *RemoteAddress              `json:"remote_address,omitempty"`
+	RemoteAddress      *RemoteAddress      `json:"remote_address,omitempty"`
 }
 
 type HeaderValueMatch struct {
@@ -82,7 +82,7 @@ type RequestHeader struct {
 	DescriptorKey string `json:"descriptor_key,required"`
 	HeaderName    string `json:"header_name,required"`
 	Value         string `json:"value,omitempty"`
-	SkipIfAbsent         string `json:"skip_if_absent,omitempty"`
+	SkipIfAbsent  string `json:"skip_if_absent,omitempty"`
 }
 
 type GenericKey struct {
@@ -107,7 +107,7 @@ type Actions struct {
 	GenericKey         *GenericKey         `json:"generic_key,omitempty"`
 	SourceCluster      *SourceCluster      `json:"source_cluster,omitempty"`
 	DestinationCluster *DestinationCluster `json:"destination_cluster,omitempty"`
-	RemoteAddress      *RemoteAddress              `json:"remote_address,omitempty"`
+	RemoteAddress      *RemoteAddress      `json:"remote_address,omitempty"`
 }
 
 // GlobalRateLimitStatus defines the observed state of GlobalRateLimit

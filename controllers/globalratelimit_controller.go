@@ -69,10 +69,9 @@ func (r *GlobalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
-		r.GlobalRateLimit.DecommissionResources(ctx,globalRateLimitInstance)
+		r.GlobalRateLimit.DecommissionResources(ctx, globalRateLimitInstance)
 		return ctrl.Result{}, nil
 	}
-
 
 	r.GlobalRateLimit.CreateOrUpdateResources(ctx, globalRateLimitInstance)
 	return ctrl.Result{}, nil

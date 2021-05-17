@@ -1,0 +1,221 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit-operator
+  namespace: platform
+  labels:
+    control-plane: ratelimit-operator
+spec:
+  selector:
+    matchLabels:
+      control-plane: ratelimit-operator
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        control-plane: ratelimit-operator
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - command:
+        - /manager
+        args:
+        - --leader-elect
+        image: registry.trendyol.com/platform/base/apps/ratelimit-operator:1.0.0
+        name: ratelimit-operator
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 300Mi
+          requests:
+            cpu: 30m
+            memory: 20Mi
+      serviceAccountName: ratelimit-operator
+      terminationGracePeriodSeconds: 10
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ratelimit-operator
+  namespace: platform
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ratelimit-operator-rolebinding
+  namespace: platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ratelimit-operator-role
+subjects:
+- kind: ServiceAccount
+  name: ratelimit-operator
+  namespace: platform
+
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ratelimit-operator-role
+  namespace: platform
+rules:
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - globalratelimits/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - trendyol.com
+  resources:
+  - localratelimits/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - '*'
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - '*'
+  resources:
+  - gateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - '*'
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - '*'
+  resources:
+  - virtualservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - envoyfilters/status
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.istio.io
+  resources:
+  - envoyfilters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+

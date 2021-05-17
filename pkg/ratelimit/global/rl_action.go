@@ -95,7 +95,7 @@ func (r *globalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 	pretty, _ := prettyPrint(strRlAction)
 
 	namespace := instance.Namespace
-	name:= getActionEnvoyFilterName(instance.Name)
+	name := getActionEnvoyFilterName(instance.Name)
 	patchValue, envoyFilterObj, err := getGlobalEnvoyFilterAction(namespace, string(pretty), instance)
 
 	_, err = r.istio.GetEnvoyFilter(ctx, namespace, name)

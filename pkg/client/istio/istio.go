@@ -14,7 +14,7 @@ import (
 )
 
 type Istio interface {
-    GetEnvoyFilter(ctx context.Context, namespace string, name string) (*v1alpha3.EnvoyFilter, error)
+	GetEnvoyFilter(ctx context.Context, namespace string, name string) (*v1alpha3.EnvoyFilter, error)
 	CreateEnvoyFilter(ctx context.Context, namespace string, envoyFilter *v1alpha3.EnvoyFilter) (*v1alpha3.EnvoyFilter, error)
 	DeleteEnvoyFilter(ctx context.Context, namespace, name string) error
 	PatchEnvoyFilter(ctx context.Context, data []byte, namespace, name string) (*v1alpha3.EnvoyFilter, error)
@@ -33,7 +33,7 @@ func (r *istioClient) DeleteEnvoyFilter(ctx context.Context, namespace, name str
 }
 
 func (r *istioClient) GetEnvoyFilter(ctx context.Context, namespace string, name string) (*v1alpha3.EnvoyFilter, error) {
-    return r.client.NetworkingV1alpha3().EnvoyFilters(namespace).Get(ctx, name, v1.GetOptions{})
+	return r.client.NetworkingV1alpha3().EnvoyFilters(namespace).Get(ctx, name, v1.GetOptions{})
 }
 
 func (r *istioClient) PatchEnvoyFilter(ctx context.Context, data []byte, namespace, name string) (*v1alpha3.EnvoyFilter, error) {

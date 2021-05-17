@@ -192,11 +192,11 @@ func prepareConfigMapData(name string, global *v1beta1.GlobalRateLimit) (map[str
 				cfDescriptor.Value = eachDimension.GenericKey.DescriptorValue
 			}
 
-			if eachDimension.SourceCluster!=nil{
+			if eachDimension.SourceCluster != nil {
 				cfDescriptor.Key = "source_cluster"
 			}
 
-			if eachDimension.DestinationCluster!=nil{
+			if eachDimension.DestinationCluster != nil {
 				cfDescriptor.Key = "destination_cluster"
 			}
 			descriptors = append(descriptors, cfDescriptor)

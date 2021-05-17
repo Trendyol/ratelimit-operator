@@ -109,7 +109,7 @@ func (r *localRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, in
 
 	patch, envoyFilter, _ := getLocalRateLimitEnvoyFilter(namespace, instance)
 
-	_ , err = r.istio.GetEnvoyFilter(ctx, namespace, getEnvoyFilterName(name))
+	_, err = r.istio.GetEnvoyFilter(ctx, namespace, getEnvoyFilterName(name))
 
 	if err != nil {
 		klog.Infof("Envoyfilter %s is not found. Error %v", instance.Name, err)
