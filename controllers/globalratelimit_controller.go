@@ -68,7 +68,6 @@ func (r *GlobalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		globalRateLimitInstance.Namespace = namespace
 	}
 
-	//ToDO: maybe we can manage it with Reconcile loop
 	//Init k8s resources
 	r.GlobalRateLimit.InitResources()
 

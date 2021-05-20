@@ -1,0 +1,3 @@
+#Stats
+
+ratelimit_service_rate_limit_over_limit{app="ratelimit", domain="discovery-reco-pda-service", instance="10.233.90.16:15020", istio_io_rev="default", job="kubernetes-pods", key1="header_match_gokhan", kubernetes_namespace="default", kubernetes_pod_name="ratelimit-85d5c8f4fd-wqkh2", pod_template_hash="85d5c8f4fd", security_istio_io_tlsMode="istio", service_istio_io_canonical_name="ratelimit", service_istio_io_canonical_revision="latest"}

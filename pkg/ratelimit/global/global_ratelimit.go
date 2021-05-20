@@ -70,7 +70,6 @@ func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v
 			klog.Infof("Error update configmap domain name  %s ", configMapKey)
 		}
 	}
-
 }
 
 func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v1beta1.GlobalRateLimit) {
