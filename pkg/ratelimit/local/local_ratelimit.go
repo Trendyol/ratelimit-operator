@@ -9,7 +9,6 @@ import (
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/klog"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var rLocalEnvoyFilterSuffixName = "-local-ratelimit"
@@ -84,8 +83,7 @@ var localRateLimitEf = `{
 }`
 
 type localRateLimit struct {
-	client client.Client
-	istio  istio.Istio
+	istio istio.Istio
 }
 
 type LocalRateLimit interface {
@@ -93,10 +91,9 @@ type LocalRateLimit interface {
 	PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.LocalRateLimit, name, namespace string)
 }
 
-func NewLocalRateLimit(client client.Client, istioClient istio.Istio) LocalRateLimit {
+func NewLocalRateLimit(istioClient istio.Istio) LocalRateLimit {
 	return &localRateLimit{
-		client: client,
-		istio:  istioClient,
+		istio: istioClient,
 	}
 }
 

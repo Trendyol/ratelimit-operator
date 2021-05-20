@@ -114,7 +114,6 @@ func (r *globalRateLimitAction) PrepareUpdateEnvoyFilterActionObjects(ctx contex
 			klog.Infof("Cannot path Ratelimit CR %s. Error %v", instance.Name, err)
 		}
 	}
-
 }
 func getGlobalEnvoyFilterAction(namespace string, action string, global *v1beta1.GlobalRateLimit) ([]byte, *v1alpha3.EnvoyFilter, error) {
 	envoyFilter := v1alpha3.EnvoyFilter{}

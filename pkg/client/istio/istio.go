@@ -3,6 +3,7 @@ package istio
 import (
 	"context"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
@@ -28,6 +29,11 @@ func NewIstioClient(cfg *rest.Config) Istio {
 	clientSet := versionedclient.NewForConfigOrDie(cfg)
 	return &istioClient{cfg: cfg, client: clientSet}
 }
+
+func FakeClient() Istio {
+	return &istioClient{client: fake.NewSimpleClientset()}
+}
+
 func (r *istioClient) DeleteEnvoyFilter(ctx context.Context, namespace, name string) error {
 	return r.client.NetworkingV1alpha3().EnvoyFilters(namespace).Delete(ctx, name, v1.DeleteOptions{})
 }
