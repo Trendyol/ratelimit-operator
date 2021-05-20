@@ -29,9 +29,8 @@ type LocalRateLimitSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of LocalRateLimit. Edit localratelimit_types.go to remove/update
-	Foo         string      `json:"foo,omitempty"`
-	Workload    string      `json:"workload,omitempty"`
-	TokenBucket TokenBucket `json:"token_bucket,omitempty"`
+	Workload    string      `json:"workload,required"`
+	TokenBucket TokenBucket `json:"token_bucket,required"`
 }
 
 // LocalRateLimitStatus defines the observed state of LocalRateLimit

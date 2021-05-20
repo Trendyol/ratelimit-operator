@@ -86,7 +86,7 @@ func main() {
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("LocalRateLimit"),
 		Scheme:      mgr.GetScheme(),
-		Local:       local.NewLocalRateLimit(mgr.GetClient(), istio.NewIstioClient(mgr.GetConfig())),
+		Local:       local.NewLocalRateLimit(istio.NewIstioClient(mgr.GetConfig())),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LocalRateLimit")
 		os.Exit(1)

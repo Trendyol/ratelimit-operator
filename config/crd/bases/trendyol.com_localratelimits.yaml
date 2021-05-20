@@ -36,10 +36,6 @@ spec:
           spec:
             description: LocalRateLimitSpec defines the desired state of LocalRateLimit
             properties:
-              foo:
-                description: Foo is an example field of LocalRateLimit. Edit localratelimit_types.go
-                  to remove/update
-                type: string
               token_bucket:
                 properties:
                   fill_interval:
@@ -54,7 +50,12 @@ spec:
                 - tokens_per_fill
                 type: object
               workload:
+                description: Foo is an example field of LocalRateLimit. Edit localratelimit_types.go
+                  to remove/update
                 type: string
+            required:
+            - token_bucket
+            - workload
             type: object
           status:
             description: LocalRateLimitStatus defines the observed state of LocalRateLimit
