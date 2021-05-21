@@ -16,7 +16,8 @@ In local rate limiting, rate limits are enforced by each Envoy instance, without
 In global rate limiting, an external rate limit service (RLS) is queried by each Envoy via gRPC for rate limit decisions.
 
 
-##Architecture
+## Architecture
+
 ![ratelimit](docs/images/ratelimit.jpeg)
 
 
