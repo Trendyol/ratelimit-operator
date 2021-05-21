@@ -30,4 +30,7 @@ See [Global Rate Limit](docs/global-ratelimit.md)
 
 
 ## Metrics && Stats
-See [Stats](docs/global-ratelimit.md)
+See [Stats](docs/metrics.md)
+
+## Benchmark
+See [Benchmark](docs/benchmark.md)
