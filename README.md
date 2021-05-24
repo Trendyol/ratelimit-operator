@@ -16,7 +16,7 @@ In local rate limiting, rate limits are enforced by each Envoy instance, without
 In global rate limiting, an external rate limit service (RLS) is queried by each Envoy via gRPC for rate limit decisions.
 
 
-## Architecture
+## Global Rate Limit Architecture
 
 ![ratelimit](docs/images/ratelimit.jpeg)
 
@@ -34,3 +34,27 @@ See [Stats](docs/metrics.md)
 
 ## Benchmark
 See [Benchmark](docs/benchmark.md)
+
+
+## Development
+
+You need install operator-sdk framework to develop ratelimit operator.
+
+Operator sdk version:
+
+`operator-sdk version: "v1.6.2", commit: "b131ca8ec77c96b9898470eba9560c30af0f23f3", kubernetes version: "v1.19.4", go version: "go1.16.3", GOOS: "darwin", GOARCH: "amd64"
+`
+
+### Create a new API and Controller 
+
+`operator-sdk create api --group trendyol.com --version v1beta1 --kind EgressRateLimit --resource --controller`
+
+### Generating CRD manifests 
+
+`make generate
+`
+
+`make manifests
+`
+
+For more details click [here](https://sdk.operatorframework.io/docs/building-operators/golang/tutorial/)
