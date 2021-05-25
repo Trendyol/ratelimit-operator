@@ -33,7 +33,7 @@ See [Global Rate Limit](docs/global-ratelimit.md)
 See [Stats](docs/metrics.md)
 
 ## Benchmark
-See [Benchmark](docs/benchmark.md)
+See [Local Ratelimit Benchmark](docs/local-ratelimit-benchmark.md)
 
 
 ## Development
