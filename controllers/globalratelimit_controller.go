@@ -71,7 +71,7 @@ func (r *GlobalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	//Init k8s resources
 	r.GlobalRateLimit.InitResources()
 
-	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
+	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound || globalRateLimitInstance.Spec.Disabled {
 		r.GlobalRateLimit.DecommissionResources(ctx, globalRateLimitInstance)
 		return ctrl.Result{}, nil
 	}

@@ -36,6 +36,8 @@ spec:
           spec:
             description: LocalRateLimitSpec defines the desired state of LocalRateLimit
             properties:
+              disabled:
+                type: boolean
               token_bucket:
                 properties:
                   fill_interval:

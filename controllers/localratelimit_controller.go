@@ -45,7 +45,7 @@ func (r *LocalRateLimitReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		Name:      req.Name,
 	}, localRateLimitInstance)
 
-	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
+	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound || localRateLimitInstance.Spec.Disabled {
 		err := r.Local.DecommissionResources(ctx, name, namespace)
 		if err != nil {
 			klog.Infof("Cannot delete localRatelimit CR %s. Error %v", localRateLimitInstance.Name, err)

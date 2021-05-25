@@ -36,6 +36,8 @@ spec:
           spec:
             description: GlobalRateLimitSpec defines the desired state of GlobalRateLimit
             properties:
+              disabled:
+                type: boolean
               domain:
                 type: string
               rate:

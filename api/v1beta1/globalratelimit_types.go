@@ -31,6 +31,7 @@ type GlobalRateLimitSpec struct {
 	Domain   string `json:"domain,required"`
 	Workload string `json:"workload,required"`
 	Rate     []Rate `json:"rate,required"`
+	Disabled bool   `json:"disabled,omitempty"`
 }
 
 type Rate struct {
