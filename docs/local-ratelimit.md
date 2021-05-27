@@ -22,6 +22,7 @@ spec:
     max_tokens: 100
     tokens_per_fill: 100
   workload: favorite-api  //Kubernetes labels app name
+  disabled: true | false //Optinal if you want to disable policy 
 ```
 
 - ``max_tokens`` The maximum request for given a period.
