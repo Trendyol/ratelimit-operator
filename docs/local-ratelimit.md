@@ -25,9 +25,16 @@ spec:
   disabled: true | false //Optinal if you want to disable policy 
 ```
 
-- ``max_tokens`` The maximum request for given a period.
-- ``tokens_per_fill``  The number of requests added to the bucket during each fill interval.
-- ``fill_interval``  The fill interval that requests are added to the bucket.
+### Property Definition
+
+| Command | Description |
+| --- | --- |
+| `max_tokens` | The maximum request for given a period. |
+| `tokens_per_fill` | The number of requests added to the bucket during each fill interval.|
+| `fill_interval` | The fill interval that requests are added to the bucket.|
+| `disable` | Enable or disable policy.|
+
+
 
 ## Testing
 

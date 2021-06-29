@@ -192,4 +192,24 @@ Ratelimit service matches on a full “descriptor”, not on individual “descr
 You can limit starting with /api endpoint and GET requests.
 
 
+### Property Definition
 
+| Command | Description |
+| --- | --- |
+| `header_value_match` | Rate limit on the existence of request headers. |
+| `request_headers` | Rate limit on request headers.|
+| `header_name` | (string, REQUIRED) The header name to be queried from the request headers. The header’s value is used to populate the value of the descriptor entry for the descriptor_key.|
+| `descriptor_key` | (string, REQUIRED) The key to use in the descriptor entry.|
+| `descriptor_value` | (string, REQUIRED) The value to use in the descriptor entry.|
+| `headers` |  Specifies a set of headers that the rate limit action should match on. The action will check the request’s headers against all the specified headers in the config. A match will happen if all the headers in the config are present in the request with the same values (or based on presence if the value field is not in the config).|
+| `name` | (string, REQUIRED) Specifies the name of the header in the request.|
+| `exact_match` | Enable or disable policy.|
+| `safe_regex_match` | (type.matcher.v3.RegexMatcher) If specified, this regex string is a regular expression rule which implies the entire request header value must match the regex. The rule will not match if only a subsequence of the request header value matches the regex.|
+| `present_match` | (bool) If specified as true, header match will be performed based on whether the header is in the request. If specified as false, header match will be performed based on whether the header is absent.|
+| `prefix_match` | (string) If specified, header match will be performed based on the prefix of the header value. Note: empty prefix is not allowed, please use present_match instead.|
+| `suffix_match` | (string) If specified, header match will be performed based on the suffix of the header value. Note: empty suffix is not allowed, please use present_match instead..|
+| `contains_match` | (string) If specified, header match will be performed based on whether the header value contains the given value or not. Note: empty contains match is not allowed, please use present_match instead.|
+| `disable` | Enable or disable policy.|
+
+
+For more details [https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#envoy-v3-api-msg-config-route-v3-ratelimit-action-requestheaders]
