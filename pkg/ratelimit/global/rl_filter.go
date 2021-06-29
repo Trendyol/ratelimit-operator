@@ -77,7 +77,7 @@ var globalRateLimitEnvoyFilter = `
         "applyTo": "CLUSTER",
         "match": {
           "cluster": {
-            "service": "ratelimit.default"
+            "service": "ratelimit.ratelimit"
           },
           "context": "SIDECAR_INBOUND"
         },
@@ -96,7 +96,7 @@ var globalRateLimitEnvoyFilter = `
                       "endpoint": {
                         "address": {
                           "socket_address": {
-                            "address": "ratelimit.default",
+                            "address": "ratelimit.ratelimit",
                             "port_value": 8081
                           }
                         }

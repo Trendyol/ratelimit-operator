@@ -17,7 +17,7 @@ import (
 )
 
 var RlConfigMapName = "ratelimit-configmap"
-var RlConfigMapNameSpace = "default"
+var RlConfigMapNameSpace = "ratelimit"
 var EnvoyFilterNames = []string{
 	"%s-ratelimit-action",
 	"%s-ratelimit-filter",
