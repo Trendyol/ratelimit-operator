@@ -34,6 +34,7 @@ See [Stats](docs/metrics.md)
 
 ## Benchmark
 See [Local Ratelimit Benchmark](docs/local-ratelimit-benchmark.md)
+See [Global Ratelimit Benchmark](docs/global-ratelimit-benchmark.md)
 
 
 ## Development
