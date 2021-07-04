@@ -7,7 +7,7 @@ It’s important to note that local rate limit policies apply per Envoy pod. For
 
 ## Configuration
 
-A local rate limit policy requires a ``max_token, fill_interval and tokens_per_fill`` fields, defining the number of max token per unit of time that are allowed. Requests must be a positive integer, and units can be ``s, m, or h``. We need to specify which deployment can be applied this configuration. We use ``workload`` key that selects kubernetes deployment label app.
+A local rate limit policy requires a ``max_token, fill_interval and tokens_per_fill`` fields, defining the number of max token per unit of time that are allowed. Requests must be a positive integer. We need to specify which deployment can be applied this configuration. We use ``workload`` key that selects kubernetes deployment label app.
 
 
 ```yaml
