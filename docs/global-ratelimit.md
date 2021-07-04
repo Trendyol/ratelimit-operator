@@ -209,7 +209,7 @@ You can limit starting with /api endpoint and GET requests.
 | `prefix_match` | (string) If specified, header match will be performed based on the prefix of the header value. Note: empty prefix is not allowed, please use present_match instead.|
 | `suffix_match` | (string) If specified, header match will be performed based on the suffix of the header value. Note: empty suffix is not allowed, please use present_match instead..|
 | `contains_match` | (string) If specified, header match will be performed based on whether the header value contains the given value or not. Note: empty contains match is not allowed, please use present_match instead.|
-| `disable` | Enable or disable policy.|
+| `disabled` | Enable or disable policy.|
 
 
 For more details [https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#envoy-v3-api-msg-config-route-v3-ratelimit-action-requestheaders]
