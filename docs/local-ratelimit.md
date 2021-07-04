@@ -32,7 +32,7 @@ spec:
 | `max_tokens` | The maximum request for given a period. |
 | `tokens_per_fill` | The number of requests added to the bucket during each fill interval.|
 | `fill_interval` | The fill interval that requests are added to the bucket.|
-| `disable` | Enable or disable policy.|
+| `disabled` | Enable or disable policy.|
 
 
 
