@@ -71,6 +71,8 @@ func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v
 		if err != nil {
 			klog.Infof("Error update configmap domain name  %s ", configMapKey)
 		}
+
+		r.RolloutIstioControlPlane(ctx)
 	}
 }
 
@@ -81,7 +83,11 @@ func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v
 		return
 	}
 
-	//	TODO:Hack for istio control plane. We need to rollout if any change on ratelimit envoyfilter objects.
+	r.RolloutIstioControlPlane(ctx)
+}
+
+//	TODO:Hack for istio control plane. We need to rollout if any change on ratelimit envoyfilter objects.
+func (r *GlobalRateLimit) RolloutIstioControlPlane(ctx context.Context) {
 	deployment := &appsv1.Deployment{}
 	_ = r.client.Get(ctx, client.ObjectKey{
 		Namespace: "istio-system",
@@ -161,7 +167,6 @@ func (r *GlobalRateLimit) InitResources() v1.ConfigMap {
 		Data: make(map[string]string, 0),
 	}
 
-	//TODO: os.GetEnv || default name,namespace
 	foundCm, err := r.getConfigMap(name, namespace)
 	if statusError, isStatus := err.(*errors.StatusError); isStatus && statusError.Status().Reason == metav1.StatusReasonNotFound {
 		err = r.client.Create(context.TODO(), &cm)
