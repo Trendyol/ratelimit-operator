@@ -7,6 +7,7 @@ import (
 	"github.com/ghodss/yaml"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/api/v1beta1"
 	"gitlab.trendyol.com/platform/base/apps/ratelimit-operator/pkg/client/istio"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
+	"time"
 )
 
 var RlConfigMapName = "ratelimit-configmap"
@@ -78,6 +80,16 @@ func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v
 	if err != nil {
 		return
 	}
+
+	//	TODO:Hack for istio control plane. We need to rollout if any change on ratelimit envoyfilter objects.
+	deployment := &appsv1.Deployment{}
+	_ = r.client.Get(ctx, client.ObjectKey{
+		Namespace: "istio-system",
+		Name:      "istiod",
+	}, deployment)
+	applyOpts := client.UpdateOptions{Raw: &metav1.UpdateOptions{FieldManager: "ratelimit-operator"}}
+	deployment.Spec.Template.ObjectMeta.Annotations["ratelimit-operator/restartedAt"] = time.Now().Format(time.RFC3339)
+	_ = r.client.Update(ctx, deployment, &applyOpts)
 }
 
 func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.GlobalRateLimit) {
