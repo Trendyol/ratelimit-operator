@@ -45,7 +45,7 @@ func NewGlobalRateLimit(client client.Client, istioClient istio.Istio) *GlobalRa
 func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v1beta1.GlobalRateLimit) {
 	for _, each := range EnvoyFilterNames {
 		filterName := fmt.Sprintf(each, instance.Name)
-		err := r.DeleteEnvoyFilterObjects(ctx, filterName, instance.Namespace)
+		err := r.deleteEnvoyFilterObjects(ctx, filterName, instance.Namespace)
 		if err != nil {
 			klog.Infof("Error when delete envoyfilter %s", filterName)
 		}
@@ -72,22 +72,22 @@ func (r *GlobalRateLimit) DecommissionResources(ctx context.Context, instance *v
 			klog.Infof("Error update configmap domain name  %s ", configMapKey)
 		}
 
-		r.RolloutIstioControlPlane(ctx)
+		r.rolloutIstioControlPlane(ctx)
 	}
 }
 
 func (r *GlobalRateLimit) CreateOrUpdateResources(ctx context.Context, global *v1beta1.GlobalRateLimit) {
-	r.PrepareUpdateEnvoyFilterObjects(ctx, global)
-	err := r.CreateOrUpdateConfigMap(global)
+	r.prepareUpdateEnvoyFilterObjects(ctx, global)
+	err := r.createOrUpdateConfigMap(global)
 	if err != nil {
 		return
 	}
 
-	r.RolloutIstioControlPlane(ctx)
+	r.rolloutIstioControlPlane(ctx)
 }
 
 //	TODO:Hack for istio control plane. We need to rollout if any change on ratelimit envoyfilter objects.
-func (r *GlobalRateLimit) RolloutIstioControlPlane(ctx context.Context) {
+func (r *GlobalRateLimit) rolloutIstioControlPlane(ctx context.Context) {
 	deployment := &appsv1.Deployment{}
 	_ = r.client.Get(ctx, client.ObjectKey{
 		Namespace: "istio-system",
@@ -98,16 +98,16 @@ func (r *GlobalRateLimit) RolloutIstioControlPlane(ctx context.Context) {
 	_ = r.client.Update(ctx, deployment, &applyOpts)
 }
 
-func (r *GlobalRateLimit) PrepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.GlobalRateLimit) {
+func (r *GlobalRateLimit) prepareUpdateEnvoyFilterObjects(ctx context.Context, global *v1beta1.GlobalRateLimit) {
 	r.PrepareUpdateEnvoyFilterActionObjects(ctx, global)
 	r.PrepareUpdateEnvoyFilterExternalObjects(ctx, global)
 }
 
-func (r *GlobalRateLimit) DeleteEnvoyFilterObjects(ctx context.Context, name, namespace string) error {
+func (r *GlobalRateLimit) deleteEnvoyFilterObjects(ctx context.Context, name, namespace string) error {
 	return r.istio.DeleteEnvoyFilter(ctx, namespace, name)
 }
 
-func (r *GlobalRateLimit) CreateOrUpdateConfigMap(global *v1beta1.GlobalRateLimit) error {
+func (r *GlobalRateLimit) createOrUpdateConfigMap(global *v1beta1.GlobalRateLimit) error {
 	var err error
 	name := global.Name
 	cmData, err := prepareConfigMapData(name, global)
